@@ -11,7 +11,11 @@
 
 ![lint](https://github.com/superwhb/crush-reply/actions/workflows/ci.yml/badge.svg)
 
-![演示：检索到卡片，再写成一句能直接发的话](assets/demo.svg)
+<p align="center">
+  <img src="assets/demo.gif" alt="45 秒演示：检索到一张卡，再按你的语气写成一句能直接发的话" width="860">
+</p>
+
+上面这段是录的，不是画出来的：`query.py` 检索到 `period-003`，`demo.py` 把卡片、多轮链和开场白拼成一包，`harvest.py` 给出当天的检索词。仓库里另有一张 `assets/preview.png`，用于 GitHub 的 Social preview。
 
 ---
 
@@ -288,6 +292,17 @@ python scripts/harvest.py promote hb-0007 # 值得进库的，出卡片骨架，
 
 `check` 会把候选和现有 500 张卡比一遍，列出最近的卡和共同词，但**只提示不裁决**：一句话的情境做自动查重不可靠，最后那一眼得人看。
 
+### 每天自动开一个 issue
+
+这三步现在有 GitHub Actions 版，`.github/workflows/daily.yml`：
+
+- 每天 09:30（北京时间）跑 `harvest.py plan`，把当天的三组检索词开成一个 issue，标签 `daily-intel`
+- issue 里写清「怎么算做完」：挑 2-3 篇搜、只提炼结构、`verdict` 怎么填
+- 你或者任何路过的人都能认领：把候选写进 `research/inbox/<日期>.jsonl`、开 PR，CI 跑 `harvest.py check`
+- 当天已经有 open 的 issue 时，它改成在该 issue 下追加评论，不会刷屏
+
+所以这个仓库的「长大」不依赖某个人记得每天去看，日历会推它。
+
 ## 加内容
 
 一条链、一张卡、一句开场白，都是一个文件一行 JSON，跑一下检查，提 PR。不用写代码。
@@ -324,6 +339,7 @@ CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_skill.py` 和 `eval.py`。红
 - [x] `demo.py` 把整条链路串成一包
 - [x] 检索回归评测，CI 卡 hit@3
 - [x] `research/` 每日情报：检索词轮转、来源登记、候选转卡（不抓取）
+- [x] 每日情报接进 GitHub Actions，每天自动开检索 issue
 - [ ] 繁简双语数据（`data/scenes-zh-Hant/`）
 - [ ] `query.py --explain`，打印命中了哪些词、为什么这张排第一
 - [ ] 表情包本地目录约定 + 一个 `stickers.py` 扫描器
@@ -331,7 +347,7 @@ CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_skill.py` 和 `eval.py`。红
 
 ## English
 
-crush-reply is an open Chinese-language Agent Skill for people who freeze up when texting someone they like. Instead of a phrasebook, it ships 500 structured "situation cards" (context, intent, moves, taboos, follow-up), 107 multi-turn threads that cover the second and third reply where most advice stops, and 100 conversation openers grouped by anchor type. When nothing in the library fits, it turns your sentence into search phrases, reads public discussions for the *structure* only, and says plainly that the case is not in the library. A `voices/` profile stores how you actually text — sentence length, punctuation, whether you split one thought into two messages — and every reply is rewritten in that style. Retrieval is a dependency-free BM25 over Chinese character bigrams with a scene prior and a 40-case eval set that gates CI. It refuses manipulation tactics, and the refusal is enforced by lint, not just by a README. MIT licensed, and every data point is one JSON object per line, so contributing is a one-line PR.
+crush-reply is an open Chinese-language Agent Skill for people who freeze up when texting someone they like. Instead of a phrasebook, it ships 500 structured "situation cards" (context, intent, moves, taboos, follow-up), 107 multi-turn threads that cover the second and third reply where most advice stops, and 100 conversation openers grouped by anchor type. When nothing in the library fits, it turns your sentence into search phrases, reads public discussions for the *structure* only, and says plainly that the case is not in the library. A `voices/` profile stores how you actually text — sentence length, punctuation, whether you split one thought into two messages — and every reply is rewritten in that style. Retrieval is a dependency-free BM25 over Chinese character bigrams with a scene prior and a 40-case eval set that gates CI. It refuses manipulation tactics, and the refusal is enforced by lint, not just by a README. A scheduled GitHub Action opens an issue every morning with that day's search phrases, so the library keeps growing without anyone remembering to feed it. MIT licensed, and every data point is one JSON object per line, so contributing is a one-line PR.
 
 ## License
 

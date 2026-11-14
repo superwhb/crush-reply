@@ -1,0 +1,82 @@
+name: daily-intel
+
+# 每天 09:30（北京时间）把当天的三组检索词开成一个 issue。
+# 只读仓库、只写 issue，不改文件、不提 PR，所以不给 contents: write。
+
+on:
+  schedule:
+    # UTC 01:30 = 北京 09:30
+    - cron: "30 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: daily-intel
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: 生成今天的检索任务
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 选出今天的检索词
+        run: |
+          python scripts/harvest.py stats
+          python scripts/harvest.py plan > plan.md
+          echo "----- plan.md -----"
+          cat plan.md
+
+      - name: 确保标签存在
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create daily-intel \
+            --color F59E0B \
+            --description "每日情报：待转成情境卡" 2>/dev/null || true
+
+      - name: 开 issue（当天已有就追加评论）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          DAY="$(date -u +%F)"
+          TITLE="今日情报 ${DAY}"
+
+          {
+            echo "每天 09:30（北京时间）自动生成。做完以后把候选写进 \`research/inbox/${DAY}.jsonl\`，开 PR，合并后把这个 issue 关掉。"
+            echo
+            echo "## 今天的检索词"
+            echo
+            cat plan.md
+            echo
+            echo "## 怎么算做完"
+            echo
+            echo "- 挑 2 到 3 条搜一轮，读没看过的；只提炼情境结构，不抄原句"
+            echo "- 每个候选一行 JSON，字段见 [research/README.md](${REPO_URL}/blob/main/research/README.md)"
+            echo "- 跑 \`python scripts/harvest.py check\`，0 错误才算完"
+            echo "- 值得补卡的写 \`verdict: keep\`；和库里重复的写 \`dup\` 并填 \`dup_of\`；劝分、玩梗、带隐私的写 \`reject\` 并填 \`reject_reason\`"
+            echo
+            echo "## 口径提醒"
+            echo
+            echo "- 评论区大量内容是「劝分」，方向和本仓库相反，看到直接 reject"
+            echo "- 不记录任何人的身份信息，不给账号、昵称、学校、公司名"
+            echo "- 同类缺口出现三次以上，才值得单独补一张卡"
+          } > body.md
+
+          EXIST="$(gh issue list --label daily-intel --state open --search "${TITLE} in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "${EXIST}" ]; then
+            echo "已存在 #${EXIST}，追加评论"
+            gh issue comment "${EXIST}" --body-file body.md
+          else
+            gh issue create --title "${TITLE}" --body-file body.md --label daily-intel
+          fi
