@@ -1,0 +1,27 @@
+# 本地画像和说话风格不进仓库
+profiles/*.md
+!profiles/_template.md
+voices/*.md
+!voices/_template.md
+
+# 缺口流水帐只留说明文件
+research/gaps/*.md
+!research/gaps/README.md
+
+# 表情包目录（体积大、版权复杂，只留索引）
+stickers/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

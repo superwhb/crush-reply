@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="660" viewBox="0 0 1180 660" role="img" aria-label="crush-reply 终端演示">
+  <rect x="0" y="0" width="1180" height="660" rx="14" fill="#0d1117"/>
+  <rect x="0" y="0" width="1180" height="44" rx="14" fill="#161b22"/>
+  <rect x="0" y="30" width="1180" height="14" fill="#161b22"/>
+  <circle cx="26" cy="22" r="6" fill="#ff5f57"/>
+  <circle cx="48" cy="22" r="6" fill="#febc2e"/>
+  <circle cx="70" cy="22" r="6" fill="#28c840"/>
+  <text x="590" y="27" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#8b949e">crush-reply · 检索</text>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Microsoft YaHei', monospace" font-size="15.5" fill="#c9d1d9">
+    <text x="28" y="82"><tspan fill="#7ee787">$</tspan> <tspan fill="#e6edf3">python scripts/query.py</tspan> <tspan fill="#a5d6ff">"她说明天来例假，肚子疼得起不来"</tspan></text>
+
+    <text x="28" y="118" fill="#8b949e">查询: 她说明天来例假，肚子疼得起不来    命中 3 张</text>
+
+    <text x="28" y="158"><tspan fill="#ffa657">[1] period-002</tspan> <tspan fill="#e6edf3">说来例假了第一天</tspan>   <tspan fill="#8b949e">难度2</tspan>   <tspan fill="#79c0ff">阶段:暧昧/已在恋爱</tspan></text>
+    <text x="28" y="186" fill="#c9d1d9">    现场: 下午三点她发来一句「来了，第一天」，后面跟了个趴着的表情</text>
+    <text x="28" y="212" fill="#c9d1d9">    目标: 接住难受，问到具体的疼法</text>
+    <text x="28" y="238" fill="#c9d1d9">    手法: 共情 / 抛小问题 / 推进</text>
+    <text x="28" y="264" fill="#8b949e">    示例:</text>
+    <text x="28" y="290" fill="#c9d1d9">      - <tspan fill="#d2a8ff">共情</tspan>  第一天最难受，你今天算是硬扛了一天</text>
+    <text x="28" y="316" fill="#c9d1d9">      - <tspan fill="#d2a8ff">反向好奇</tspan>  现在是哪种疼，一阵一阵的还是一直坠着</text>
+    <text x="28" y="342" fill="#c9d1d9">      - <tspan fill="#d2a8ff">推进</tspan>  暖贴我先给你备两片，明天顺路带过去</text>
+    <text x="28" y="368"><tspan fill="#8b949e">    别说:</tspan> <tspan fill="#ff7b72">多喝热水；那你今天早点睡；每个月都这样，习惯就好了</tspan></text>
+    <text x="28" y="394" fill="#c9d1d9">    续法: 她只回个嗯，晚上九点再问一句「疼到几分了」</text>
+
+    <line x1="28" y1="424" x2="1152" y2="424" stroke="#30363d" stroke-width="1"/>
+
+    <text x="28" y="456" fill="#8b949e">提醒: 卡片给的是方向，不要照抄。用你自己的话重写成一句能直接发出去的微信。</text>
+
+    <text x="28" y="496"><tspan fill="#d2a8ff">判断</tspan>  她这条是在说疼，不是问怎么办。先接住，再落一个能立刻执行的动作。</text>
+    <text x="28" y="526"><tspan fill="#d2a8ff">回复</tspan>  第一天最难受，你今天算是硬扛了一天</text>
+    <text x="28" y="556"><tspan fill="#d2a8ff">别回</tspan>  <tspan fill="#ff7b72">多喝热水</tspan> <tspan fill="#8b949e">（她听过一百遍了，等于没说）</tspan></text>
+    <text x="28" y="586"><tspan fill="#d2a8ff">续法</tspan>  她只回个嗯，隔两小时再问一句「疼到几分了」</text>
+
+    <text x="28" y="626" fill="#484f58">500 张情境卡 · 107 条多轮链 · 100 条开场白 · 10 类场景 · 零依赖 · MIT</text>
+  </g>
+</svg>

@@ -1,1 +1,338 @@
 # crush-reply
+
+**暧昧关系里的回复助手。** 500 张情境卡、107 条多轮链、100 条开场白、一份对方画像、一份你自己的说话风格档案，和一个零依赖检索脚本。你不知道怎么回的时候，它帮你把话想清楚，再按你自己的说话习惯写出来。
+
+[![license](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
+[![python](https://img.shields.io/badge/python-3.9%2B-3776ab)](scripts/)
+[![cards](https://img.shields.io/badge/情境卡-500-f59e0b)](data/scenes)
+[![threads](https://img.shields.io/badge/多轮链-107-8b5cf6)](data/threads)
+[![openers](https://img.shields.io/badge/开场白-100-06b6d4)](data/openers.jsonl)
+[![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)](CONTRIBUTING.md)
+
+![lint](https://github.com/superwhb/crush-reply/actions/workflows/ci.yml/badge.svg)
+
+![演示：检索到卡片，再写成一句能直接发的话](assets/demo.svg)
+
+---
+
+## 它不是话术库
+
+市面上多数「聊天技巧」是一堆可以复制粘贴的句子。这类东西有三个死穴：对方回什么你都得重新找、照抄一眼假、越用越像在演一个人。
+
+crush-reply 存的是**情境**，不是句子。
+
+| | 话术库 | crush-reply |
+|---|---|---|
+| 存什么 | 1000 条可复制的句子 | 500 张情境卡：现场、意图、方向、禁忌、续法 |
+| 多轮怎么办 | 没有，只到第一句 | 107 条多轮链，写到第四轮和怎么收尾 |
+| 没由头怎么办 | 让你「主动一点」 | 100 条开场白，按五种由头分 |
+| 库里没有怎么办 | 用「通常女生都……」硬编 | 拆出检索词去公开平台找结构，再按你的语气写 |
+| 怎么用 | 找到像的，复制 | 检索相近情境，再按画像重写 |
+| 会不会重复 | 会，说法只有那么多 | 不会，每次重写 |
+| 能不能长大 | 加句子，越来越乱 | 加卡、加链，有格式校验和检索回归 |
+
+一张卡长这样：
+
+```json
+{"id":"period-003","scene":"period","title":"说肚子疼得厉害",
+ "signal":"晚上八点她说「疼得厉害了，坐着都难受」，隔了很久才补一句「刚趴了一会儿」",
+ "stage":["聊得来","暧昧","已在恋爱"],
+ "goal":"认真接住疼，落到一个具体动作",
+ "moves":["共情","认真回应","推进"],
+ "examples":[{"style":"共情","text":"这句听着就知道不是一般的疼"},
+             {"style":"认真","text":"你现在一个人在家还是有人陪，我想知道该不该过去"},
+             {"style":"推进","text":"我给你点份热的汤，二十分钟到楼下"}],
+ "taboo":["忍一忍就过去了","是不是吃坏东西了","吃点止痛药吧"],
+ "followup":"她没回先不追，一小时后发「汤点了，放门口，你拿了再说一声」",
+ "tags":["肚子疼","痛经","第一天"],"difficulty":2}
+```
+
+`examples` 是口径，不是可发文本。照抄会立刻露馅，`SKILL.md` 里明令禁止。
+
+## 为什么还写多轮
+
+因为只教第一句没用。真实的情况是：第一句勉强回过去了，她回了个「嗯」，然后你不知道接什么，对话就死在那儿。
+
+所以每条链都写成「她一句、你一句、为什么这么走」，四轮左右，最后一句写**她没接的时候怎么收**。这部分比怎么回更值钱。
+
+```json
+{"id":"th-daily-03","scene":"daily","title":"她主动问在干嘛",
+ "premise":"暧昧期，你们平时两三天聊一次，今天她先发消息",
+ "turns":[{"her":"在干嘛","you":"刚把碗洗完，正想着晚上干点什么","why":"给一个具体画面，留话头"},
+          {"her":"这么乖，还洗碗","you":"我妈说我再不洗就没饭吃。你呢，今天怎么这么闲","why":"自嘲一下，把话递回去"},
+          {"her":"我也是刚忙完，躺着刷手机","you":"躺着刷手机最费时间。要不要换个姿势，走两步去楼下买杯东西","why":"从闲聊引到一个动作"},
+          {"her":"这么晚还出去啊","you":"那就明天，下班那会儿我去你公司附近，十分钟的事","why":"把动作落到明天"}],
+ "exit":"她答应就定时间；她说再说吧就到这儿，第二天别再提，隔两天聊别的",
+ "tags":["在干嘛","主动","约","接话"],"difficulty":1}
+```
+
+## 三十秒试用
+
+不用装任何东西，有 Python 就能跑：
+
+```bash
+git clone https://github.com/superwhb/crush-reply.git crush-reply
+cd crush-reply
+
+# 单条消息怎么回
+python scripts/query.py --scene period "疼得厉害了，坐着都难受" --top 2
+
+# 接下来几轮怎么走
+python scripts/thread.py "她说想辞职，说完就不说话了"
+
+# 想开口，但没由头
+python demo.py "想找个话题，我们三天没聊了"
+```
+
+```text
+查询: 疼得厉害了，坐着都难受    命中 2 张
+
+[1] period-003  说肚子疼得厉害   难度2  阶段:聊得来/暧昧/已在恋爱
+    现场: 晚上八点她说「疼得厉害了，坐着都难受」，隔了很久才补一句「刚趴了一会儿」
+    目标: 认真接住疼，落到一个具体动作
+    手法: 共情 / 认真回应 / 推进
+    示例:
+      - 共情  这句听着就知道不是一般的疼
+      - 认真  你现在一个人在家还是有人陪，我想知道该不该过去
+      - 推进  我给你点份热的汤，二十分钟到楼下
+    别说: 忍一忍就过去了；是不是吃坏东西了；吃点止痛药吧
+    续法: 她没回先不追，一小时后发「汤点了，放门口，你拿了再说一声」
+
+[2] period-036  疼到干呕想吐   难度3  阶段:暧昧/已在恋爱
+    现场: 「疼得想吐，刚才干呕了一下，现在什么都不敢吃，坐着都难受」
+    目标: 认真接住，把疼到吐当成需要处理的信号
+    手法: 认真回应 / 共情 / 推进
+    示例:
+      - 认真  疼到吐就别在家扛了，今天就去看
+      - 共情  想吐的时候连水都不敢咽，太难熬
+      - 推进  先别吃东西，我过来接你，十分钟到
+    别说: 吃点东西压一压；喝口热的缓缓；撑到不疼就好了
+    续法: 她不愿意去就退一步问「那有没有人陪你」，两小时后必须再确认一次
+
+提醒: 卡片给的是方向，不要照抄。用你自己的话、按对方的画像重写成一句能直接发出去的微信。
+```
+
+检索是纯 Python：中文按字符二元组做倒排，BM25 排序，按场景和字段加权。没有 jieba，没有依赖，没有 API key。
+
+`demo.py` 是懒人版：一条命令把画像、三张卡、两条多轮链、三条开场白拼成一段材料，末尾附固定输出格式。它**不调用任何模型**，产出可以整段贴给 ChatGPT / Claude / DeepSeek 用。
+
+三个完整走流程的样例（输入、检索、输出、以及为什么那么改）：
+
+- [她在吐槽食堂](examples/01-share-daily.md)
+- [她说肚子疼得厉害](examples/02-period.md)
+- [她说还是做朋友](examples/03-rejection.md)
+- [她说想辞职，第二句之后才是真问题](examples/04-multi-turn.md)
+- [库里没有这张卡的时候](examples/05-outside.md)
+
+## 安装成 skill
+
+**Claude Code**
+
+```bash
+git clone https://github.com/superwhb/crush-reply.git ~/.claude/skills/crush-reply
+```
+
+**Codex / 其他支持 Agent Skills 的客户端**
+
+`~/.codex/skills/crush-reply/`，或者客户端文档里写的那个 skills 目录，整个仓库放进去就行。
+
+**DeepSeek Harness**
+
+```bash
+git clone https://github.com/superwhb/crush-reply.git ~/.dsh/skills/crush-reply
+```
+
+**手动**：把仓库路径发给模型，让它先读 `SKILL.md`。
+
+装完先让它建一份画像：
+
+```bash
+python scripts/profile.py new 小鹿
+```
+
+然后编辑 `profiles/小鹿.md`，填关系阶段、MBTI、星座、作息、饮食、雷区、近期事件。**只填知道的，不确定就空着，不要替对方编。**
+
+再花五分钟填 `voices/` 里你自己的说话风格，贴几条你真发过的消息。有没有这个，回复像不像你，差别很大。
+
+## 让它像你说话
+
+这是这个仓库和「AI 帮你写情话」最大的区别：**它不写它自己的句子，它写你的句子。**
+
+```bash
+python scripts/voice.py new 小鹿        # 建档案（文件名跟画像代号一致）
+python scripts/voice.py check           # 至少三条样例才算学得像
+python scripts/voice.py show 小鹿       # 看现在都记了什么
+```
+
+档案里只记四件事，没有形容词：
+
+1. 一句多长，会不会拆成两条发
+2. 用不用句号、问号、「~」、「……」，用不用 emoji，常用哪几个
+3. 有哪些口头禅，哪些词你从来不这么说
+4. 五到十条你真发过的消息（最好像你平时，不是最像样子）
+
+照着这几条填好，模型就按你的句长、标点、连发节奏重写。没有档案时它会用最短的口语，并在回答最后问你要三条原话——**问原话比问「你想要什么风格」有用**，因为几乎没人能准确描述自己的说话方式。
+
+这件事写进了 `SKILL.md` 的重写规则和 `demo.py` 的输出指令里，不是可选项。
+
+## 它怎么工作
+
+```
+用户:「她发了个食堂菜的照片说又是这个，我该回啥」
+   │
+   ├─ 1. 读画像      profiles/小鹿.md      关系阶段、MBTI、雷区、近期事件
+   ├─ 2. 定场景      daily / period / …    十个场景，选一个或两个
+   ├─ 3. 检索        scripts/query.py      命中 3 张情境卡
+   │                 scripts/thread.py     命中 2 条多轮链
+   │                 data/openers.jsonl    没有由头时找 3 条开场
+   │                 一张都不像 → scripts/find.py 拆检索词，去外面找结构
+   └─ 4. 重写        SKILL.md 的规则       按阶段、画像、你的语气写成一句
+                                              │
+                                              ▼
+         【判断】她这条是想被接住，不要方案
+         【可以这样回】三条，按轻重排
+         【别这样回】写具体的错句，不是抽象原则
+         【她要是只回一个表情，你就过二十分钟拍自己那份饭】
+         【第二三轮注意】她变短了就停，别连问
+```
+
+四个细节值得说：
+
+1. **检索只负责缩小范围**。模型看 3 到 5 张卡，再多会互相干扰。
+2. **重写受三条约束**：关系阶段的音量、你自己的句式和标点、对方的画像。
+3. **每条回复都要留话头**。不能接下去的回答，写得再漂亮也是死的。
+4. **多轮链只借节奏，不借台词**。照念第一句像人，照念第四句就不像了。
+
+## 库里没有的时候
+
+500 张卡也盖不住所有人。真遇到库里没有的情况，它有三个选择：编一张像的、套一句「通常女生都……」，或者承认没有。
+
+前两个都会让你在聊天里露馅。所以这个仓库选第三个，但它不只说「没有」：
+
+```bash
+python scripts/find.py "她说你根本不懂我在气什么"
+```
+
+这条命令不联网，只做三件事：
+
+1. 猜场景（猜不出就老实说猜不出）
+2. 把你这句原话拆成检索词——库里认得的标签词优先，认不得就用原话加引号
+3. 给一段提炼模板：她的原话 / 拆出来的检索词 / 搜完怎么提炼（她要什么、那些回复共同的动作、哪条在你这阶段不成立、你会发的一句）
+
+然后模型拿前两三条检索词去搜小红书、知乎、豆瓣小组，**只提炼结构，不抄句子**，最后用 `voices/` 的句式把那一句写出来。回答里必须写清「这个情况库里没有」，而不是假装检索到了。
+
+想留痕就加 `--note`，记进 `research/gaps/<日期>.md`。同一类出现三次，才值得补一张卡；只出现一次的，通常是个例，不用管。完整示例见 [库里没有这张卡的时候](examples/05-outside.md)。
+
+## 数据
+
+| 场景 | 文件 | 卡片 | 多轮链 | 覆盖 |
+|---|---|---|---|---|
+| 分享日常 | `data/scenes/daily.jsonl` | 50 | 12 | 吐槽、分享、暗示、久不回、自拍、语音 |
+| 生理期 | `data/scenes/period.jsonl` | 50 | 11 | 经前、第一天、疼、情绪崩、周期异常 |
+| 闹矛盾 | `data/scenes/conflict.jsonl` | 50 | 12 | 你自己的错、外部摩擦、冷战修复、说重话 |
+| 吃醋 | `data/scenes/jealousy.jsonl` | 50 | 11 | 前任、异性朋友、被比较、被表白 |
+| 深夜情绪 | `data/scenes/latenight.jsonl` | 50 | 10 | 失眠、emo、自我否定、危机 |
+| 约出来 | `data/scenes/meetup.jsonl` | 50 | 11 | 开口、定时间、被拒、改期、迟到 |
+| 家人与家庭 | `data/scenes/family.jsonl` | 50 | 10 | 父母反对、催婚、家里出事、丧亲 |
+| 异地 | `data/scenes/distance.jsonl` | 50 | 10 | 时差、见不到、谁去谁的城、见不到尽头 |
+| 朋友与社交 | `data/scenes/friends.jsonl` | 50 | 10 | 她朋友怎么看你、聚会、男性朋友、被晾着 |
+| 生日与纪念日 | `data/scenes/anniversary.jsonl` | 50 | 10 | 忘了日子、礼物、要不要发朋友圈、红包 |
+
+难度分布：日常轻量 112 张、要判断情绪 230 张、容易翻车 158 张。
+风格分布：认真 429 条、共情 325 条、退让 221 条、反向好奇 198 条、推进 150 条、自嘲 99 条、玩梗 54 条。
+
+除了这三类内容，还有两份索引：
+
+- `data/memes.jsonl`：梗的元信息，包括起源时间、适用情绪、什么场合别用。**不存「当下最火」的结论**，那个三个月就过期，用过期梗比不用梗更扣分，所以用之前要联网确认。
+- `data/stickers.json`：表情包按情绪索引，只存「什么时候发什么情绪、搜什么词」。图片不放进仓库，版权和体积都扛不住，读你本地那个表情包目录就行。
+
+## 检索质量
+
+`evals/cases.jsonl` 是 40 条真人会问的句子，十个场景每个至少三条，每条写明应该命中哪一类卡。改检索参数就跑：
+
+```bash
+python scripts/eval.py -v
+```
+
+```text
+用例 40 条
+hit@1 37/40 = 92%
+hit@3 38/40 = 95%
+```
+
+CI 要求 `hit@3 ≥ 90%`，跌破就红。这就是这个仓库不靠「我觉得搜得准」的地方：加卡可能把好结果挤下去，评测会挡住。现在剩下的两条 MISS 都是「这句话本身就该由人多问一句」——问「我们算什么关系」这类要在对话里才判得准的句子，检索给的三张卡都只是近邻，`SKILL.md` 里写明这时候宁可说实话也不要硬指一张。
+
+## 它怎么长大
+
+500 张卡是静态的，人的说话方式不是。所以仓库里带了一条「每天看一点」的轻流程，在 `research/`：
+
+```bash
+python scripts/harvest.py plan            # 今天该搜的三组词（按日期轮转，跳过最近搜过的主题）
+#   └─ 用你的搜索工具搜这三组，挑 2-3 篇没看过的读完
+python scripts/harvest.py check           # 校验候选，并列出每条候选在库里的两张最近邻卡
+python scripts/harvest.py promote hb-0007 # 值得进库的，出卡片骨架，自己改完再 lint
+```
+
+它**不抓取**。小红书和抖音没有可用的公开接口，反爬也强，爬下来的东西带版权和隐私问题，所以这个仓库里没有爬虫，也没有一行抄来的句子。每条素材都是「人读完，用自己的话写一句情境 + 一句缺口 + 一句提炼」，加上原文链接：
+
+```json
+{"id": "hb-0004", "date": "2026-11-14", "platform": "news", "url": "https://…", "title": "失眠安慰语",
+ "scene_guess": "latenight",
+ "situation": "她说睡不着，你回「别想太多，早点睡」，她再没说话",
+ "gap": "latenight 卡偏情绪安抚，缺「哪几句安慰本身就是否定她」的清单",
+ "insight": "「别想太多」「我有时候也这样」「你就是作息乱」这三句一律不用，先承认她此刻难受",
+ "verdict": "keep"}
+```
+
+三条口径写在 [research/README.md](research/README.md)，其中一条值得单独拎出来：**小红书情感帖评论区有大量「劝分」内容**（腾讯新闻和界面新闻都报道过这个现象）。那套话术的结论是「离开」，这个仓库的结论是「先把这句话说好」，方向相反，所以看到这类内容直接 `verdict: reject`。`research/inbox/` 里已经留了第一批 5 条样本，包括一条 reject——看得见「什么不该学」比看得见「什么该学」更重要。
+
+`check` 会把候选和现有 500 张卡比一遍，列出最近的卡和共同词，但**只提示不裁决**：一句话的情境做自动查重不可靠，最后那一眼得人看。
+
+## 加内容
+
+一条链、一张卡、一句开场白，都是一个文件一行 JSON，跑一下检查，提 PR。不用写代码。
+
+```bash
+# 读完 data/schema.md，追加一行
+python scripts/lint_data.py      # 情境卡：缺字段、id 重复、红线词，报到行号
+python scripts/lint_extra.py     # 多轮链与开场白
+python scripts/eval.py           # 检索回归
+```
+
+CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_skill.py` 和 `eval.py`。红线词、称呼词、超长示例、枚举外的值、让检索变差的改动，都进不来。细节看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+## 红线
+
+这些写在 `SKILL.md`、`data/schema.md` 和 `scripts/lint_data.py` 三处，改代码也绕不过 CI：
+
+- 不写打压、冷处理、假装忙、欲擒故纵、试探性欺骗、性暗示。
+- 不替用户编人设。他没那么忙，就不会出现「刚开完会」。
+- 对方明确拒绝后，只给体面退场，不给「再试一次」。
+- 不碰未成年人。
+- 出现自伤或绝望的信号，立刻停止恋爱建议，给专业资源（中国大陆可拨 12356），并建议告诉身边可信任的人。
+- 不承诺结果。不说「这样回她一定开心」。
+
+立场就一句：**帮你把想法说出来，不是帮你演一个人。**
+
+## Roadmap
+
+- [x] 情境卡扩到 500 张，场景从 6 类扩到 10 类
+- [x] 107 条多轮链，写到第四轮和收尾
+- [x] 100 条开场白，按五种由头分
+- [x] 库里没有时拆检索词、去公开平台找结构（`scripts/find.py`）
+- [x] 说话风格档案 `voices/`，回复按本人句式重写（`scripts/voice.py`）
+- [x] `demo.py` 把整条链路串成一包
+- [x] 检索回归评测，CI 卡 hit@3
+- [x] `research/` 每日情报：检索词轮转、来源登记、候选转卡（不抓取）
+- [ ] 繁简双语数据（`data/scenes-zh-Hant/`）
+- [ ] `query.py --explain`，打印命中了哪些词、为什么这张排第一
+- [ ] 表情包本地目录约定 + 一个 `stickers.py` 扫描器
+- [ ] 从真实聊天记录导出的 `voices/` 半自动生成（只在本地跑，不上传）
+
+## English
+
+crush-reply is an open Chinese-language Agent Skill for people who freeze up when texting someone they like. Instead of a phrasebook, it ships 500 structured "situation cards" (context, intent, moves, taboos, follow-up), 107 multi-turn threads that cover the second and third reply where most advice stops, and 100 conversation openers grouped by anchor type. When nothing in the library fits, it turns your sentence into search phrases, reads public discussions for the *structure* only, and says plainly that the case is not in the library. A `voices/` profile stores how you actually text — sentence length, punctuation, whether you split one thought into two messages — and every reply is rewritten in that style. Retrieval is a dependency-free BM25 over Chinese character bigrams with a scene prior and a 40-case eval set that gates CI. It refuses manipulation tactics, and the refusal is enforced by lint, not just by a README. MIT licensed, and every data point is one JSON object per line, so contributing is a one-line PR.
+
+## License
+
+MIT. 数据里的示例句子由贡献者原创，不要搬运别人视频或文章的文案。

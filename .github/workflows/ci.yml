@@ -1,0 +1,59 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 校验情境卡
+        run: python scripts/lint_data.py
+
+      - name: 校验多轮链与开场白
+        run: python scripts/lint_extra.py
+
+      - name: 校验 SKILL.md
+        run: python scripts/lint_skill.py
+
+      - name: 检索冒烟测试
+        run: |
+          python scripts/query.py "她说明天来例假，肚子疼得起不来" --top 3
+          python scripts/query.py --scene conflict --top 2 "她生我气了不理我"
+          python scripts/query.py --list > /dev/null
+          python scripts/thread.py "她说想辞职，说完就不说话了" --top 2
+          python scripts/thread.py --list > /dev/null
+
+      - name: 检索回归（hit@3 低于 90% 就失败）
+        run: python scripts/eval.py
+
+      - name: 校验每日情报的候选与来源
+        run: |
+          python scripts/harvest.py check
+          python scripts/harvest.py plan -n 1 > /dev/null
+          python scripts/harvest.py stats
+
+      - name: 库外兜底与语气档案冒烟测试
+        run: |
+          python scripts/find.py "她说她最近有点累，但又不说怎么了"
+          python scripts/find.py "前任突然来点赞" --json > /dev/null
+          python scripts/voice.py list
+          python scripts/voice.py new 测试语气
+          python scripts/voice.py show 测试语气 > /dev/null
+          rm -f "voices/测试语气.md"
+
+      - name: 画像与提示包冒烟测试
+        run: |
+          python scripts/profile.py new 测试人
+          python scripts/profile.py show 测试人
+          python demo.py "她今天说想辞职" --scene daily > /dev/null
+          python demo.py --openers > /dev/null
+          rm -f "profiles/测试人.md"
+          python scripts/query.py --stats
