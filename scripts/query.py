@@ -138,6 +138,25 @@ def scene_boost(query: str, card: dict) -> float:
     return min(hits, 3) * 0.45
 
 
+def explain_terms(qtokens, tf, df, avgdl, n_docs, limit=6) -> list[tuple[str, int, int, float]]:
+    """返回 [(token, 在卡里出现次数, 文档频率, 贡献分)]，按贡献从大到小。"""
+    dl = sum(tf.values()) or 1
+    rows = []
+    seen = set()
+    for token in qtokens:
+        if token in seen:
+            continue
+        seen.add(token)
+        freq = tf.get(token)
+        if not freq:
+            continue
+        idf = math.log(1 + (n_docs - df[token] + 0.5) / (df[token] + 0.5))
+        contrib = idf * (freq * (1.5 + 1)) / (freq + 1.5 * (1 - 0.75 + 0.75 * dl / avgdl))
+        rows.append((token, freq, df[token], contrib))
+    rows.sort(key=lambda r: -r[3])
+    return rows[:limit]
+
+
 def render(card: dict, rank: int) -> str:
     lines = [
         f"[{rank}] {card['id']}  {card['title']}   难度{card['difficulty']}  阶段:{'/'.join(card['stage'])}",
@@ -162,6 +181,8 @@ def main() -> None:
     parser.add_argument("--scene", choices=sorted(SCENES), help="只看某个场景")
     parser.add_argument("--top", type=int, default=5, help="返回几张卡，默认 5")
     parser.add_argument("--json", action="store_true", help="输出 JSON，方便别的程序接")
+    parser.add_argument("--explain", action="store_true",
+                        help="打印命中了哪些词、场景加了多少分，看排名是怎么来的")
     parser.add_argument("--list", action="store_true", help="列出全部卡片")
     parser.add_argument("--stats", action="store_true", help="看看数据分布")
     args = parser.parse_args()
@@ -198,6 +219,7 @@ def main() -> None:
         scored.append((s, card))
     scored.sort(key=lambda pair: (-pair[0], pair[1]["id"]))
     top = [(s, c) for s, c in scored if s > 0][: args.top]
+    tf_by_id = {c["id"]: tf for c, tf in zip(pool, tfs)}
 
     if not top:
         print("没有匹配的卡片。可以换个说法，或者用 --list 找相近的情境。", file=sys.stderr)
@@ -209,6 +231,23 @@ def main() -> None:
         return
 
     print(f"查询: {query}    命中 {len(top)} 张\n")
+
+    if args.explain:
+        print("— 为什么是这几张（前 3 名）—")
+        for i, (score, card) in enumerate(top[:3], 1):
+            boost = scene_boost(query, card)
+            hits = [w for w in SCENE_HINTS.get(card["scene"], "").split() if w in query]
+            rows = explain_terms(qtokens, tf_by_id[card["id"]], df, avgdl, len(pool))
+            print(f"[{i}] {card['id']}  总分 {score:.2f} = 文本 {score - boost:.2f} + 场景 {boost:.2f}")
+            if hits:
+                print(f"    场景词: {' / '.join(hits[:5])}  （每个 +0.45，最多三个）")
+            if rows:
+                parts = [f"{tok}×{freq}(df{dfreq},{contrib:.2f})" for tok, freq, dfreq, contrib in rows]
+                print("    命中词: " + "；".join(parts))
+            else:
+                print("    命中词: 无（只靠场景加成进来的，说明这句话和卡里的措辞差得远）")
+        print()
+
     for i, (score, card) in enumerate(top, 1):
         print(render(card, i))
         print()

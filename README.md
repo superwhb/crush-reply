@@ -1,21 +1,22 @@
 # crush-reply
 
-**暧昧关系里的回复助手。** 500 张情境卡、107 条多轮链、100 条开场白、一份对方画像、一份你自己的说话风格档案，和一个零依赖检索脚本。你不知道怎么回的时候，它帮你把话想清楚，再按你自己的说话习惯写出来。
+**暧昧关系里的回复助手。** 500 张情境卡、107 条多轮链、100 条开场白、24 条挂着文献的心理学概念、一份对方画像、一份你自己的说话风格档案，和一个零依赖检索脚本。你不知道怎么回的时候，它帮你把话想清楚，再按你自己的说话习惯写出来。
 
 [![license](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.9%2B-3776ab)](scripts/)
 [![cards](https://img.shields.io/badge/情境卡-500-f59e0b)](data/scenes)
 [![threads](https://img.shields.io/badge/多轮链-107-8b5cf6)](data/threads)
 [![openers](https://img.shields.io/badge/开场白-100-06b6d4)](data/openers.jsonl)
+[![concepts](https://img.shields.io/badge/心理学概念-24-ec4899)](data/psych.jsonl)
 [![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)](CONTRIBUTING.md)
 
 ![lint](https://github.com/superwhb/crush-reply/actions/workflows/ci.yml/badge.svg)
 
 <p align="center">
-  <img src="assets/demo.gif" alt="45 秒演示：检索到一张卡，再按你的语气写成一句能直接发的话" width="860">
+  <img src="assets/demo.gif" alt="53 秒演示：检索到一张卡，按你的语气写成一句能直接发的话，最后看这一层在心理学上对应什么" width="860">
 </p>
 
-上面这段是录的，不是画出来的：`query.py` 检索到 `period-003`，`demo.py` 把卡片、多轮链和开场白拼成一包，`harvest.py` 给出当天的检索词。仓库里另有一张 `assets/preview.png`，用于 GitHub 的 Social preview。
+上面这段是录的，不是画出来的：`query.py` 检索到 `period-003`，`demo.py` 把卡片、多轮链和开场白拼成一包，`harvest.py` 给出当天的检索词，最后 `psych.py` 说明这一层为什么有用。仓库里另有一张 `assets/preview.png`，用于 GitHub 的 Social preview。
 
 ---
 
@@ -34,6 +35,37 @@ crush-reply 存的是**情境**，不是句子。
 | 怎么用 | 找到像的，复制 | 检索相近情境，再按画像重写 |
 | 会不会重复 | 会，说法只有那么多 | 不会，每次重写 |
 | 能不能长大 | 加句子，越来越乱 | 加卡、加链，有格式校验和检索回归 |
+
+同一句话，两种给法。左边是话术库能给的（把常见写法拼一起），右边是它检索完再按你语气重写的：
+
+```text
+你说的       她晚上八点发：「疼得厉害了，坐着都难受」
+
+话术库       1. 多喝热水，早点休息哦
+             2. 心疼你，抱抱~
+             3. 要不要我给你点份红糖水？照顾好自己
+
+             ↑ 三句都对，但三句都不像你。她前一天刚说过
+               「你别老发这种」，你还是发了，她知道你在搜模板。
+
+crush-reply  【判断】她想被接住，不是要方案。她说「坐着都难受」，
+             是在告诉你疼到没法待着，不是问你怎么办。
+
+             【可以这样回】
+             1（最稳） 这不是一般的肚子疼吧，你现在一个人在家还是有人陪
+             2（给动作）我给你点份热的，二十分钟到楼下，你不用下楼我拿上去
+             3（轻一点）先别坐着了，躺一下。等你不那么难受了跟我说一声
+
+             【别这样回】多喝热水 / 忍一忍 / 吃点止痛药
+
+             【她要是只回一个表情】不追。一小时后再问一句「好点没」，
+             不要问「怎么不回我」
+
+             ↑ 这三句按你的说话习惯改过：你一句平均 12 个字、不拆条、
+               不用「~」、偶尔空格代替句号。所以看起来是你发的。
+```
+
+差别不在文采，在于三件事：它先判断这是哪种疼（疼到坐着都难受 vs 普通肚子疼）、它知道这个号上哪些话已经说过、它把你的句长和标点当硬约束，而不是给你一句「高情商回复」。
 
 一张卡长这样：
 
@@ -127,6 +159,7 @@ python demo.py "想找个话题，我们三天没聊了"
 - [她说还是做朋友](examples/03-rejection.md)
 - [她说想辞职，第二句之后才是真问题](examples/04-multi-turn.md)
 - [库里没有这张卡的时候](examples/05-outside.md)
+- [她说今晚跟男同事打游戏，为什么这句能说那句不能说](examples/06-psych.md)
 
 ## 安装成 skill
 
@@ -147,6 +180,56 @@ git clone https://github.com/superwhb/crush-reply.git ~/.dsh/skills/crush-reply
 ```
 
 **手动**：把仓库路径发给模型，让它先读 `SKILL.md`。
+
+### 各客户端的目录与格式
+
+| 客户端 | skill 目录 | frontmatter 要求 |
+|---|---|---|
+| Claude Code | `~/.claude/skills/<名字>/SKILL.md` | `name` 必须等于目录名，`description` 是触发条件 |
+| Codex CLI | `~/.codex/skills/<名字>/SKILL.md` | 同上 |
+| DeepSeek Harness | `~/.dsh/skills/<名字>/SKILL.md` | 同上，另外支持 `PROMPT.md` 形式的旧插件 |
+| Cursor / 其他 | 客户端文档里的 skills 目录 | 同 Agent Skills 规范 |
+
+三个客户端的格式要求是一致的（Agent Skills 规范），所以同一份仓库可以直接放进去，不用改。
+
+### 装完先跑自检
+
+```bash
+python scripts/doctor.py
+```
+
+它会查五件事：frontmatter 的 `name` 和目录名是否一致、必需文件是否齐全（11 个）、数据文件是不是 UTF-8 无 BOM、三个 lint 加一条检索冒烟能不能过、这个目录在不在某个客户端的 skills 路径下。全过就八行 `ok`；有问题会直接告诉你是哪一条、怎么改。
+
+```text
+crush-reply doctor · /Users/you/.claude/skills/crush-reply
+python 3.12.1
+
+一、这个目录能不能被客户端读到
+  ok  frontmatter name = crush-reply
+  ok  装在 Claude Code 的 skills 目录下
+二、数据文件
+  ok  11 个必需文件都在
+三、编码
+  ok  数据文件都是 UTF-8 无 BOM
+四、校验与检索
+  ok  卡片 lint 通过
+  ok  多轮链与开场白 lint 通过
+  ok  心理学概念 lint 通过
+  ok  检索冒烟通过（period 能命中）
+----------------------------------------------
+全部通过（8 项）。可以开始用了
+```
+
+### 装不上怎么办
+
+四条最常见的原因，按这个顺序对：
+
+1. **frontmatter 的 `name` 和目录名不一致** —— `SKILL.md` 里写的是 `crush-reply`，你解压出来的目录叫 `crush-reply-main`，客户端就不会加载。改目录名，或者改 frontmatter。
+2. **放错了位置** —— Claude Code 只读 `~/.claude/skills/` 下面一层，`~/Downloads/crush-reply` 里的不会被看到。
+3. **数据只拷了一部分** —— `data/scenes/` 要 10 个 jsonl，`data/threads/` 要 10 个 jsonl。少一个，`doctor.py` 会点名。
+4. **文件被编辑器存成了 GBK** —— Windows 记事本另存时会这样。重存为 UTF-8 无 BOM，或者直接用 `git clone` 拿一份没动过的。
+
+还有一种：客户端读到了 skill 但没有按预期回答。多半是它没读到 `data/` 里的文件（有些客户端只把 `SKILL.md` 塞进上下文）。这种情况在对话里直接说「读 `data/scenes/period.jsonl`，用 `scripts/query.py` 检索」，或者跑 `demo.py` 把材料拼好贴给它。
 
 装完先让它建一份画像：
 
@@ -179,6 +262,39 @@ python scripts/voice.py show 小鹿       # 看现在都记了什么
 
 这件事写进了 `SKILL.md` 的重写规则和 `demo.py` 的输出指令里，不是可选项。
 
+## 判断有出处
+
+卡片说「这么回」，`data/psych.jsonl` 说「为什么这么回有用」。24 条概念，来自公开发表的研究与临床写作，不是二手公众号：
+
+- 情绪确认（Linehan 1993）
+- 四骑士、修复尝试、正负比、生理性淹没（Gottman 1994 / 1999）
+- 依恋焦虑、回避、抗议行为（Hazan & Shaver 1987；Bowlby 1969）
+- 非暴力沟通四步（Rosenberg 2003）
+- 主动建设性回应（Gable 2004）、自我表露互惠（Altman & Taylor 1973）
+- 道歉的四个成分（Lewicki / Polin / Lount 2016）
+
+```bash
+python scripts/psych.py "她一直不回我，我就很想再发一条"
+```
+
+```text
+ps-005  依恋焦虑   [Hazan & Shaver 1987 成人依恋研究]
+  用在哪: 对方回得慢一点你就反复看手机，想再发一条确认
+  一句话: 想确认对方还在，是焦虑型依恋常见的反应，不代表你小心眼
+  怎么做: 把「你在干嘛」换成说自己的状态，给一次不索要回应的消息
+  别用成: 不要连续追问三次以上，追问换来的回复不算真的回应
+```
+
+它只做一件事：把「我该怎么回」变成「她这句在表达什么」。三条硬规则写进了 `scripts/lint_psych.py`，违了 CI 会红：
+
+1. **不给对方下诊断** —— 不许出现「你就是回避型」「确诊」「治愈」这类说法，概念是解释现场的工具，不是给人贴的标签。
+2. **不写「网上都说」** —— 每条必须挂具体文献（作者 + 年份），写不出出处就不收。
+3. **每类场景至少两条** —— 十个场景，任何一个场景在两分钟内找不到能解释它的概念，说明这一层的覆盖面不够。
+
+用法上它排在卡片后面：先去检索三张卡，卡给了方向，再看概念，决定这一句是接情绪还是给台阶。`SKILL.md` 里明确写了「不要把概念名说给对方听」——说「你在情绪淹没里」比不说更糟。
+
+完整走一遍的例子见 [她说今晚跟男同事打游戏，为什么这句能说那句不能说](examples/06-psych.md)。
+
 ## 它怎么工作
 
 ```
@@ -189,6 +305,7 @@ python scripts/voice.py show 小鹿       # 看现在都记了什么
    ├─ 3. 检索        scripts/query.py      命中 3 张情境卡
    │                 scripts/thread.py     命中 2 条多轮链
    │                 data/openers.jsonl    没有由头时找 3 条开场
+   │                 scripts/psych.py      2 条概念，说明为什么这么回有用
    │                 一张都不像 → scripts/find.py 拆检索词，去外面找结构
    └─ 4. 重写        SKILL.md 的规则       按阶段、画像、你的语气写成一句
                                               │
@@ -245,8 +362,9 @@ python scripts/find.py "她说你根本不懂我在气什么"
 难度分布：日常轻量 112 张、要判断情绪 230 张、容易翻车 158 张。
 风格分布：认真 429 条、共情 325 条、退让 221 条、反向好奇 198 条、推进 150 条、自嘲 99 条、玩梗 54 条。
 
-除了这三类内容，还有两份索引：
+除了这三类内容，还有三份索引：
 
+- `data/psych.jsonl`：24 条心理学概念，每条挂公开文献，用来解释「为什么这么回有用」。只做参照，不给对方贴标签。
 - `data/memes.jsonl`：梗的元信息，包括起源时间、适用情绪、什么场合别用。**不存「当下最火」的结论**，那个三个月就过期，用过期梗比不用梗更扣分，所以用之前要联网确认。
 - `data/stickers.json`：表情包按情绪索引，只存「什么时候发什么情绪、搜什么词」。图片不放进仓库，版权和体积都扛不住，读你本地那个表情包目录就行。
 
@@ -308,13 +426,36 @@ python scripts/harvest.py promote hb-0007 # 值得进库的，出卡片骨架，
 一条链、一张卡、一句开场白，都是一个文件一行 JSON，跑一下检查，提 PR。不用写代码。
 
 ```bash
-# 读完 data/schema.md，追加一行
+# 读完 data/schema.md，用脚本加，字段和枚举它会帮你验
+python scripts/new_card.py                       # 一步步问，写完自动 lint
+python scripts/new_card.py --scene period --title "…" --signal "…" \
+    --goal "…" --stage 暧昧 --moves 共情,认真回应 \
+    --example "共情=…" --example "推进=…" \
+    --taboo "…" --followup "…" --tags … --difficulty 2
+
+# 手动改文件的话，三件事都要跑
 python scripts/lint_data.py      # 情境卡：缺字段、id 重复、红线词，报到行号
 python scripts/lint_extra.py     # 多轮链与开场白
+python scripts/lint_psych.py     # 心理学概念：诊断式表述、来源、场景覆盖
 python scripts/eval.py           # 检索回归
 ```
 
-CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_skill.py` 和 `eval.py`。红线词、称呼词、超长示例、枚举外的值、让检索变差的改动，都进不来。细节看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+`new_card.py` 做三件事：自动取下一个没被占用的 id、按 `lint_data.py` 的同一套规则当场验、写进去之后整体 lint 不过就自动回滚。它和 CI 用的是同一个 `check_card()`，不会出现「本地过了 CI 红」这种事。
+
+CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_psych.py`、`lint_skill.py` 和 `eval.py`。红线词、称呼词、超长示例、枚举外的值、诊断式表述、让检索变差的改动，都进不来。细节看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+## 内容来源与免责声明
+
+**数据怎么来的。** 500 张卡、107 条链、100 条开场白，是读完公开的情感咨询、沟通研究、以及小红书/知乎/豆瓣等平台上的公开讨论后，**用自己的话重写的情境结构**，不是抄来的句子。每张卡存的是「现场信号 + 目标 + 三种方向 + 禁忌 + 续法」，句子是模型按你的画像和语气现写的。`data/psych.jsonl` 的 24 条概念逐条挂了公开文献。
+
+**它不是什么。**
+- 不是心理咨询，不诊断任何人的依恋类型或人格，`lint_psych.py` 里禁掉了「你就是」「确诊」「治愈」这类说法。
+- 不保证结果。同一句话对不同的人效果相反，这套东西只帮你把想说的说清楚。
+- 不采集你的聊天记录。所有画像、语气档案、缺口记录都在你本地，`.gitignore` 里排除了 `profiles/*.md`、`voices/*.md` 和 `research/gaps/*.md`。
+
+**遇到真问题的时候。** 如果对方出现自伤、绝望、被家暴、涉及未成年人的信号，这个仓库的所有话术都不适用。先确认安全，再联系她的家人朋友，中国大陆可拨 12356（心理援助热线），紧急情况 110 / 120。`latenight` 场景里这类卡一律标注「优先确认安全」，不给调情建议。
+
+**版权与许可。** 代码 MIT；`data/` 下的内容以 CC BY-SA 4.0 提供（见 [LICENSE-DATA](LICENSE-DATA.md)）。商用、改写、二次分发都可以，保留署名、以相同方式共享。
 
 ## 红线
 
@@ -340,9 +481,15 @@ CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_skill.py` 和 `eval.py`。红
 - [x] 检索回归评测，CI 卡 hit@3
 - [x] `research/` 每日情报：检索词轮转、来源登记、候选转卡（不抓取）
 - [x] 每日情报接进 GitHub Actions，每天自动开检索 issue
+- [x] `query.py --explain`：打印命中了哪些词、场景加成多少、为什么这张排第一
+- [x] 24 条心理学概念层，每条挂公开文献（`data/psych.jsonl` + `scripts/psych.py`）
+- [x] `scripts/doctor.py`：装完自检，五类常见问题直接点名
+- [x] `scripts/new_card.py`：加卡不写 JSON，当场校验、失败回滚
+- [x] issue / PR 模板：卡片缺口、报错、缺场景三类
 - [ ] 繁简双语数据（`data/scenes-zh-Hant/`）
-- [ ] `query.py --explain`，打印命中了哪些词、为什么这张排第一
 - [ ] 表情包本地目录约定 + 一个 `stickers.py` 扫描器
+- [ ] grep baseline 对照，证明检索不是自说自话
+- [ ] MCP server 形态，挂到任意客户端
 - [ ] 从真实聊天记录导出的 `voices/` 半自动生成（只在本地跑，不上传）
 
 ## English

@@ -71,6 +71,9 @@ python scripts/thread.py "她说完晚安又发了一句有点难过" --scene la
 
 # 没由头，想开口
 python demo.py "想找个话题，我们三天没聊了"
+
+# 想知道为什么这张排第一（命中了哪些词、场景加成多少）
+python scripts/query.py --explain "她说这句话的原话" --scene latenight
 ```
 
 单条回复取 3 到 5 张卡，多轮链取 1 到 2 条。不要一次读十几张，卡片之间会互相干扰。
@@ -93,6 +96,23 @@ python demo.py "想找个话题，我们三天没聊了"
 6. 想留痕就加 `--note`，记进 `research/gaps/<日期>.md`，攒够了按 `data/schema.md` 补卡。
 
 禁止三件事：拿「通常女生都……」填空；把网上的原句直接发出去；把劝分、试探、冷处理这类结论当方法转述。
+
+### 第三步后半，看概念层（用来解释判断，不是为了说给谁听）
+
+```bash
+python scripts/psych.py --scene latenight
+python scripts/psych.py "她一直不回我，我就很想再发一条"
+```
+
+`data/psych.jsonl` 里有 24 条概念，每条挂着公开文献（Gottman、Linehan、Rosenberg、Hazan & Shaver 等）。它回答的是「她这句话在表达什么」，不是「该说什么」。
+
+用法只有一条：**先读卡，再用概念校准判断**。比如她在冷战时说「随便你」，卡告诉你退一步给出口，概念告诉你这是生理性淹没之后的关闭，所以现在讲道理等于往枪口上撞。
+
+三条硬规矩：
+
+1. **不要把这个概念名说给用户听**，更不要说给对方听。说「你在情绪淹没里」比不说更糟。
+2. **不要下诊断**。「焦虑型依恋」能用来理解她，不能用来概括她这个人，`lint_psych.py` 里禁掉了「你就是」「确诊」「治愈」这类说法。
+3. **概念和你的判断冲突时，听现场的**。文献讲的是平均情况，你手上是具体一个人。
 
 ### 第四步，重写
 
@@ -152,18 +172,23 @@ data/schema.md           卡片、多轮链、开场白的格式，要加内容�
 data/scenes/*.jsonl      情境卡，十个场景各一个文件
 data/threads/*.jsonl     多轮链，每场景十条上下
 data/openers.jsonl       开场白，按五种由头分
+data/psych.jsonl         24 条心理学概念，每条挂公开文献（只解释判断，不贴标签）
 data/memes.jsonl         梗的元信息（不含结论，结论靠联网）
 data/stickers.json       表情包索引（按情绪找，不存图片）
 evals/cases.jsonl        检索回归用例，改检索参数后跑 scripts/eval.py
 profiles/<代号>.md       对方画像
 voices/<代号>.md         用户自己的说话风格（回复像不像本人的依据）
-scripts/query.py         单条消息检索
+scripts/query.py         单条消息检索（--explain 打印为什么这张排第一）
 scripts/thread.py        多轮链检索
+scripts/psych.py         概念层检索
 scripts/find.py          库里没有时，算出该去搜什么、怎么提炼
 scripts/voice.py         说话风格档案的建、读、校验
 scripts/profile.py       画像读写
+scripts/doctor.py        装完自检：目录、文件、编码、lint、检索冒烟
+scripts/new_card.py      加卡向导：字段与枚举当场验，失败自动回滚
 scripts/lint_data.py     卡片质检
 scripts/lint_extra.py    多轮链与开场白质检
+scripts/lint_psych.py    概念质检：诊断式表述、文献来源、场景覆盖
 scripts/eval.py          检索回归
 research/                每日情报：候选、来源登记、缺口记录、口径（不抓取，只读不写）
 scripts/harvest.py       情报管线：轮转检索词、校验候选、出卡片骨架
@@ -180,3 +205,4 @@ examples/                完整对话样例，不确定风格时看这个
 - 「最近女生都在聊什么」这类问法不是要话术，是要更新。读 `research/inbox/` 最近几条候选，挑 `keep` 的说，并且说清哪条是网络上流行、哪条是别人劝她分手的——别把「劝分」当趋势推荐给他。
 - 「我这个情况库里没有吧」先跑检索，再跑 `python scripts/find.py "她的原话"`。真没有就明说、给外部参考、记一条缺口，这比编一张卡有用。
 - 「能不能用我平时说话的语气」读 `voices/<代号>.md`。没有就先要三条他发过的消息，别问"你想要什么风格"。
+- 「她是不是回避型 / 我是不是焦虑型」可以用 `data/psych.jsonl` 的概念解释现象，但**不要给任何人下结论**。说清这是理解现场的框架，不是人格诊断，真困扰到影响生活就去心理咨询。

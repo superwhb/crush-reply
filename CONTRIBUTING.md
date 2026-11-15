@@ -1,11 +1,35 @@
 # 怎么加一张卡
 
-改一个文件，加一行 JSON，跑一下检查，提 PR。不需要写代码。
+改一个文件，加一行 JSON，跑一下检查，提 PR。不需要写代码。熟练之后十分钟能提一张。
+
+## 第一次来，走这条十分钟的路
+
+```bash
+# 1. 拿一份
+git clone https://github.com/superwhb/crush-reply.git
+cd crush-reply
+python scripts/doctor.py          # 八行 ok 就说明环境没问题
+
+# 2. 找一张你觉得写错的卡：跑一句真会出现的对话
+python scripts/query.py --scene conflict "她生我气了，一句话都不回" --top 3
+
+# 3. 用向导加一张新的进去，字段和枚举它当场验
+python scripts/new_card.py --scene conflict
+#    它会问标题、现场信号、目标、阶段、动作、两种写法、禁忌、续法、标签
+#    写完自动跑一遍全库 lint，没过就回滚，不会把仓库搞坏
+
+# 4. 确认它能被搜到
+python scripts/query.py --scene conflict "你刚写的那句现场" --top 3
+
+# 5. 提 PR，模板里的勾勾上
+```
+
+不想装 Python 也行：在 issue 里贴出「她说了什么 + 你希望这张卡覆盖什么」，用 [卡片缺口模板](.github/ISSUE_TEMPLATE/card-gap.md)，别人会接。
 
 ## 步骤
 
 ```bash
-git clone https://github.com/<you>/crush-reply.git
+git clone https://github.com/superwhb/crush-reply.git
 cd crush-reply
 
 # 1. 读格式
@@ -24,10 +48,12 @@ cat data/schema.md
 #    data/scenes/anniversary.jsonl  生日与纪念日
 #
 #    多轮链放 data/threads/<场景>.jsonl，开场白放 data/openers.jsonl
+#    心理学概念放 data/psych.jsonl
 
-# 3. 检查（缺字段、id 重复、红线词都会报行号）
+# 3. 检查（缺字段、id 重复、红线词、诊断式表述都会报行号）
 python scripts/lint_data.py
 python scripts/lint_extra.py
+python scripts/lint_psych.py
 
 # 4. 试试别人能不能搜到你这张卡
 python scripts/query.py "你自己想的那句对方的话"
@@ -60,6 +86,19 @@ python scripts/query.py "你自己想的那句对方的话"
 - `exit` 必须写清「她没接怎么收」。这不是补充说明，是这条链最值钱的一行。
 
 开场白看 `data/openers.jsonl`，一个文件装全部场景。优先补 `anchor=她提过的事` 这类，它的接受率最高。
+
+## 加一条心理学概念
+
+`data/psych.jsonl` 一行一条，字段和口径在 `data/schema.md` 的「心理学概念格式」一节。三条最容易踩的：
+
+1. **source 必须能查**。写「Gottman 1999《The Seven Principles for Making Marriage Work》」，不写「看过一篇讲戈特曼的文章」。
+2. **say 必须是人话**。出现「认知失调」「依恋图式」这种词，等于没写。
+3. **不贴标签**。`when`/`say`/`do`/`dont` 里出现「你就是」「型人格」「确诊」「治愈」，`lint_psych.py` 直接失败，这是故意的。
+
+```bash
+python scripts/lint_psych.py            # 校验字段、来源、场景覆盖
+python scripts/psych.py --scene period  # 看看这个场景现在有哪几条
+```
 
 ## 从素材到卡
 

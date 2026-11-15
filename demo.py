@@ -22,6 +22,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from query import bm25, load_cards, scene_boost, tokenize  # noqa: E402
 from thread import index_text as thread_text, load_threads  # noqa: E402
+from psych import load as load_psych, score as psych_score  # noqa: E402
 
 PROFILE_DIR = ROOT / "profiles"
 VOICE_DIR = ROOT / "voices"
@@ -42,7 +43,8 @@ OUTPUT_RULES = f"""输出要求（照这个格式，别写别的）：
 【别这样回】两条，写具体的错句，不是抽象原则。
 【她要是只回一个表情，你就】一句具体的续法。
 【第二三轮注意】这条链最容易崩在哪一轮，以及撑不住时怎么收。
-{VOICE_RULE}"""
+{VOICE_RULE}
+如果材料里给了「心理层」的概念，只用来支撑【判断】，不要把这个概念名说给对方听，也不要在回复里写「你属于……型」。"""
 
 
 def read_profile(name: str | None) -> str:
@@ -144,6 +146,22 @@ def pick_openers(profile: str, n: int) -> list[dict]:
     return rows[:n] if has_event else rows[:n]
 
 
+def search_concepts(query: str, scene: str | None, top: int = 2) -> list[dict]:
+    """这一层只用来解释判断，不写进回复。"""
+    if not query:
+        return []
+    try:
+        items = load_psych()
+    except SystemExit:
+        return []
+    pool = [i for i in items if not scene or scene in i.get("scenes", [])]
+    if not pool:
+        return []
+    tokens = tokenize(query)
+    scored = sorted(((psych_score(tokens, i), i) for i in pool), key=lambda p: (-p[0], p[1]["id"]))
+    return [i for s, i in scored if s > 0][:top]
+
+
 def wants_openers(query: str, flag: bool) -> bool:
     """问「聊什么」的时候自动附上开场话题，不用记参数。"""
     if flag or not query:
@@ -167,6 +185,7 @@ def render_pack(query: str, profile_name: str | None, scene: str | None,
     scored = card_scores(query, scene) if query else []
     cards = [card for _, card in scored[:3]]
     threads = search_threads(query, 2) if query else []
+    concepts = search_concepts(query, scene) if query else []
     openers = pick_openers(profile, 3) if wants_openers(query, with_openers) else []
 
     opening_only = not query
@@ -195,6 +214,13 @@ def render_pack(query: str, profile_name: str | None, scene: str | None,
                     "如果读完觉得不对路，先跑 scripts/find.py 去外面找，别硬套。", ""]
     elif query:
         out += [FALLBACK_HINT, ""]
+    if concepts:
+        out += ["## 心理层（只用来支撑判断，不要说给对方听，也不要贴标签）"]
+        for item in concepts:
+            out.append(f"- {item['concept']}：{item['say']}")
+            out.append(f"    怎么做：{item['do']}")
+            out.append(f"    别用成：{item['dont']}")
+        out.append("")
     if threads:
         out += ["## 可能走向的多轮链（看节奏，别照念）"]
         for thread in threads:
@@ -236,6 +262,7 @@ def main() -> None:
             "cards": search_cards(query, 3, args.scene) if query else [],
             "threads": search_threads(query, 2) if query else [],
             "openers": pick_openers(read_profile(args.profile), 3) if wants_openers(query, args.openers) else [],
+            "concepts": search_concepts(query, args.scene) if query else [],
             "fallback": bool(query) and not search_cards(query, 3, args.scene),
         }
         print(json.dumps(pack, ensure_ascii=False, indent=2))

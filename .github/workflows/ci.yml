@@ -20,6 +20,9 @@ jobs:
       - name: 校验多轮链与开场白
         run: python scripts/lint_extra.py
 
+      - name: 校验心理学概念
+        run: python scripts/lint_psych.py
+
       - name: 校验 SKILL.md
         run: python scripts/lint_skill.py
 
@@ -28,8 +31,16 @@ jobs:
           python scripts/query.py "她说明天来例假，肚子疼得起不来" --top 3
           python scripts/query.py --scene conflict --top 2 "她生我气了不理我"
           python scripts/query.py --list > /dev/null
+          python scripts/query.py --explain --scene period --top 1 "疼得厉害了，坐着都难受"
           python scripts/thread.py "她说想辞职，说完就不说话了" --top 2
           python scripts/thread.py --list > /dev/null
+
+      - name: 概念层冒烟测试
+        run: |
+          python scripts/psych.py --list
+          python scripts/psych.py --scene conflict --top 2
+          python scripts/psych.py "她一直不回我，我就很想再发一条"
+          python scripts/psych.py --json > /dev/null
 
       - name: 检索回归（hit@3 低于 90% 就失败）
         run: python scripts/eval.py
@@ -54,6 +65,19 @@ jobs:
           python scripts/profile.py new 测试人
           python scripts/profile.py show 测试人
           python demo.py "她今天说想辞职" --scene daily > /dev/null
+          python demo.py "她一直不回我" --scene daily > /dev/null
           python demo.py --openers > /dev/null
           rm -f "profiles/测试人.md"
           python scripts/query.py --stats
+
+      - name: 自检与加卡工具
+        run: |
+          python scripts/doctor.py --quiet
+          python scripts/new_card.py --scene period --title "CI 冒烟卡" \
+            --signal "晚上九点她说今天又疼得厉害了" --goal "接住疼，落到一个动作" \
+            --stage 暧昧 --moves 共情,认真回应 \
+            --example "共情=这句听着不像普通肚子疼" \
+            --example "认真=你现在一个人还是有人陪" \
+            --taboo "多喝热水" --taboo "忍一忍就过去了" \
+            --followup "她没回就一小时后问一句好点没" \
+            --tags 冒烟,测试 --difficulty 1 --dry-run
