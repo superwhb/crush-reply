@@ -35,6 +35,15 @@ def gaps_dir() -> Path:
     return data_home() / "gaps"
 
 
+def write_text(path: Path, text: str) -> None:
+    """固定 UTF-8 + LF 写文件。
+
+    不用 Path.write_text(newline=...)：那个参数 3.10 才有，3.9 上会 TypeError。
+    """
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+
+
 def _migrate(src: Path, dst: Path) -> list[str]:
     moved: list[str] = []
     if not src.is_dir():

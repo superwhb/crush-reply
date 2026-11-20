@@ -192,7 +192,8 @@ def main() -> None:
         capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(ROOT),
     )
     if proc.returncode != 0:
-        path.write_text(original, encoding="utf-8", newline="\n")
+        with path.open("w", encoding="utf-8", newline="\n") as fh:
+            fh.write(original)
         print("\n写进去之后整体 lint 没过，已回滚。下面是报错：")
         print((proc.stdout or "") + (proc.stderr or ""))
         sys.exit(1)

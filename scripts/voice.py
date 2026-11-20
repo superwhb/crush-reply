@@ -39,7 +39,7 @@ def cmd_new(alias: str) -> None:
         text = TEMPLATE.read_text(encoding="utf-8").replace("{代号}", alias)
     else:
         text = f"# 我的说话风格 · {alias}\n\n## 我平时怎么发消息\n\n```\n（贴 3-10 条你真发过的消息）\n```\n"
-    path.write_text(text, encoding="utf-8", newline="\n")
+    paths.write_text(path, text)
     print(f"已建好: {path}")
     print("贴 5 到 10 条你自己真发过的消息进去，越日常越好；别挑最好听的，挑最像你平时的。")
 

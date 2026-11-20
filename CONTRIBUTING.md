@@ -65,7 +65,7 @@ python -m unittest discover -s tests
 
 加卡最容易踩的是第 5 步：新卡可能把旧用例的正确答案挤到第二位。这是真实存在的情况，`eval.py` 会点名是哪一条，改卡或者改用例都行，别直接跳过去。
 
-需要 Python 3.9 以上，没有第三方依赖。
+需要 Python 3.9 以上，没有第三方依赖。CI 会在 3.9 和 3.12 上各跑一遍，所以别用 3.10 以后才有的写法（比如 `Path.write_text(newline=...)`、`match` 语句、`zip(strict=True)`）；写文件统一走 `paths.write_text`。
 
 ## 什么卡会被合
 

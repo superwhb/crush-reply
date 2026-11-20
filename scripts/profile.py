@@ -97,7 +97,7 @@ def cmd_new(alias: str) -> None:
     path = folder / f"{alias}.md"
     if path.exists():
         sys.exit(f"{path.name} 已经存在，换一个代号，或者直接编辑它")
-    path.write_text(template(alias), encoding="utf-8", newline="\n")
+    paths.write_text(path, template(alias))
     print(f"已建好: {path}")
     print(f"填完跑 `python scripts/profile.py show {alias}` 看看读出来对不对")
 
