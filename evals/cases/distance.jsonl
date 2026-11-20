@@ -1,0 +1,10 @@
+{"query": "视频接通她靠在床头刷手机，说好像也没什么要讲的", "scene": "distance", "expect": ["distance-003"]}
+{"query": "她凌晨发睡了吗，早上又说没事睡了就算了", "scene": "distance", "expect": ["distance-012"]}
+{"query": "她抢到票发我截图，问我这边怎么样，我还停在排队页", "scene": "distance", "expect": ["distance-023"]}
+{"query": "视频里她说你说点什么啊，我脑子里一片空白", "scene": "distance", "expect": ["distance-025"]}
+{"query": "她发12306截图说下周末票一张都没了，刷了四十分钟", "scene": "distance", "expect": ["distance-001"]}
+{"query": "出发前两天她说有点慌，怕见面反而不自在", "scene": "distance", "expect": ["distance-013"]}
+{"query": "我说下个月过去住她附近，她回你不用特意跑一趟", "scene": "distance", "expect": ["distance-030"]}
+{"query": "我隔了五个小时才回，她说算不清我这边时差", "scene": "distance", "expect": ["distance-036"]}
+{"query": "她晚上发体温计38.6，家里没退烧药外卖也停了", "scene": "distance", "expect": ["distance-005"]}
+{"query": "送她进站，检票口前她眼睛红了，说你回去吧", "scene": "distance", "expect": ["distance-014"]}

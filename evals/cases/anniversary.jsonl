@@ -1,0 +1,10 @@
+{"query": "她生日说不用叫人，就想在家待着", "scene": "anniversary", "expect": ["anniversary-005"]}
+{"query": "她端出蛋糕，我才发现我什么都没准备", "scene": "anniversary", "expect": ["anniversary-025"]}
+{"query": "她拆开礼物只说了句哦这个啊", "scene": "anniversary", "expect": ["anniversary-033"]}
+{"query": "情人节前一天才想起来订位，附近全满了，她说那算了", "scene": "anniversary", "expect": ["anniversary-041"]}
+{"query": "她说下周生日，我问想要什么，她说都行你看着办", "scene": "anniversary", "expect": ["anniversary-001"]}
+{"query": "情人节前她问那天你有安排吗，说完补一句随便问问", "scene": "anniversary", "expect": ["anniversary-013"]}
+{"query": "她说生日别买东西，你送我才有压力", "scene": "anniversary", "expect": ["anniversary-026"]}
+{"query": "她生日那天我值班，八点才能到，她已经在店里坐下了", "scene": "anniversary", "expect": ["anniversary-038"]}
+{"query": "她订了七点的位子，我下午被叫回公司顶班", "scene": "anniversary", "expect": ["anniversary-002"]}
+{"query": "她突然问我还记不记得我们哪天在一起的", "scene": "anniversary", "expect": ["anniversary-011"]}

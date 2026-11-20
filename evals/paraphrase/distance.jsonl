@@ -1,0 +1,3 @@
+{"query": "视频接通她一直刷手机，说没什么好讲", "scene": "distance", "expect": ["distance-003"]}
+{"query": "她半夜问我睡了没，早上又说算了", "scene": "distance", "expect": ["distance-012"]}
+{"query": "送她走的时候，她在闸机前眼睛红了", "scene": "distance", "expect": ["distance-014"]}

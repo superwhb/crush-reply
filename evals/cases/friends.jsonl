@@ -1,0 +1,10 @@
+{"query": "她说周六组个局，把我介绍给他们", "scene": "friends", "expect": ["friends-004"]}
+{"query": "她在群里被起哄是不是谈恋爱了，截图发我说烦死了", "scene": "friends", "expect": ["friends-011"]}
+{"query": "她说自己朋友不多，能说上话的就两三个", "scene": "friends", "expect": ["friends-017"]}
+{"query": "群里有人问我们是不是成了，什么时候请吃饭", "scene": "friends", "expect": ["friends-025"]}
+{"query": "她闺蜜说我上次吃饭全程没怎么说话", "scene": "friends", "expect": ["friends-001"]}
+{"query": "她说周四约了他吃饭，就他们俩", "scene": "friends", "expect": ["friends-013"]}
+{"query": "她朋友婚礼忙到十点，说今天都没顾上你别怪我", "scene": "friends", "expect": ["friends-028"]}
+{"query": "她说要陪失恋的朋友一周，我们原本约了两件事", "scene": "friends", "expect": ["friends-039"]}
+{"query": "她说她几个朋友都觉得我不太适合她", "scene": "friends", "expect": ["friends-003"]}
+{"query": "她说朋友觉得进展太快，让她慢点", "scene": "friends", "expect": ["friends-016"]}

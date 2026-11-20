@@ -1,0 +1,12 @@
+{
+  "min_hit1": 0.95,
+  "min_hit3": 0.98,
+  "min_mrr": 0.95,
+  "min_route": 0.95,
+  "scene_min_hit3": 0.90,
+  "para_min_hit1": 0.75,
+  "para_min_hit3": 0.90,
+  "para_min_mrr": 0.80,
+  "para_min_route": 0.90,
+  "para_scene_min_hit3": 0.60
+}

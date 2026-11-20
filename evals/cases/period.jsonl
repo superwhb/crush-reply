@@ -1,0 +1,10 @@
+{"query": "她说腰跟断了似的，坐一会儿就得站起来", "scene": "period", "expect": ["period-004"]}
+{"query": "她第二天说好多了，昨天真是要命", "scene": "period", "expect": ["period-015"]}
+{"query": "她说只想蜷在床上不动，手机也不想看", "scene": "period", "expect": ["period-033"]}
+{"query": "她说这个月得提前把药备上", "scene": "period", "expect": ["period-044"]}
+{"query": "她说这两天谁跟她说话都烦，先跟我说一声", "scene": "period", "expect": ["period-001"]}
+{"query": "她说吃了药还是疼，感觉白吃了", "scene": "period", "expect": ["period-010"]}
+{"query": "她说该来的日子过了一天还没动静", "scene": "period", "expect": ["period-023"]}
+{"query": "她让我以后别再说多喝热水", "scene": "period", "expect": ["period-037"]}
+{"query": "我问要不要送点东西，她说别管我谁都不想理", "scene": "period", "expect": ["period-008"]}
+{"query": "她说这个月推了快十天还没来，越等越慌", "scene": "period", "expect": ["period-018"]}

@@ -1,0 +1,10 @@
+{"query": "她提过想去那家新店，我当时只回了个表情包", "scene": "meetup", "expect": ["meetup-001"]}
+{"query": "结账时她把手机伸过来说我来吧", "scene": "meetup", "expect": ["meetup-017"]}
+{"query": "第一次见面她说别选太吵的地方，让我定", "scene": "meetup", "expect": ["meetup-027"]}
+{"query": "出门下大雨，她问还去吗，不想淋成落汤鸡", "scene": "meetup", "expect": ["meetup-042"]}
+{"query": "我问周六还是周日，她说看情况吧最近有点忙", "scene": "meetup", "expect": ["meetup-003"]}
+{"query": "菜上来两个人都不说话，她刷了两次手机", "scene": "meetup", "expect": ["meetup-012"]}
+{"query": "她回那边太远了来回两小时，要不算了吧", "scene": "meetup", "expect": ["meetup-028"]}
+{"query": "我约周六，她说那天跟朋友约好了改天吧", "scene": "meetup", "expect": ["meetup-032"]}
+{"query": "她说叫上她朋友一起吧，人多热闹点", "scene": "meetup", "expect": ["meetup-005"]}
+{"query": "她说还是做朋友吧，对我没有那种感觉", "scene": "meetup", "expect": ["meetup-007"]}

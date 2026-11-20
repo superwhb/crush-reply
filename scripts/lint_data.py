@@ -18,6 +18,9 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+from index import tokenize  # noqa: E402
+
 SCENE_DIR = ROOT / "data" / "scenes"
 
 SCENES = {"daily", "period", "conflict", "jealousy", "latenight", "meetup",
@@ -136,6 +139,24 @@ def check_card(card: dict, where: str, errors: list[str], warns: list[str]) -> N
         err("difficulty 只能是 1/2/3")
 
 
+def near_duplicates(cards: list[dict], floor: float = 0.6) -> list[str]:
+    """signal + title 的词集合太像，说明两张卡在讲同一件事。"""
+    sets = []
+    for card in cards:
+        text = str(card.get("title", "")) + " " + str(card.get("signal", ""))
+        sets.append((card.get("id"), set(tokenize(text))))
+    out = []
+    for i in range(len(sets)):
+        for j in range(i + 1, len(sets)):
+            a, b = sets[i][1], sets[j][1]
+            if not a or not b:
+                continue
+            jac = len(a & b) / len(a | b)
+            if jac >= floor:
+                out.append(f"{sets[i][0]} 和 {sets[j][0]} 太像（重合度 {jac:.0%}），确认是不是同一件事")
+    return out
+
+
 def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -189,12 +210,30 @@ def main() -> None:
         if count > 1 and text:
             warns.append(f"示例话术重复 {count} 次: {text}")
 
+    # 标签只用一次就等于没标签：检索时会被 MIN_TAG_DF 直接丢掉，白写。
+    tag_counts = Counter(str(t) for c in cards for t in c.get("tags", []))
+    single_tags = sorted(t for t, n in tag_counts.items() if n == 1)
+    if single_tags:
+        sample = "、".join(single_tags[:10])
+        warns.append(f"{len(single_tags)} 个标签全库只用过一次（{sample}…），"
+                     "检索时会忽略它们；能复用已有标签就别造新的")
+
+    # 同一个 goal 被一堆卡共用，说明这个词没区分度，模型看不出差别。
+    goal_counts = Counter(str(c.get("goal", "")) for c in cards)
+    for goal, n in goal_counts.most_common(3):
+        if n >= 12:
+            warns.append(f"goal {goal!r} 被 {n} 张卡共用，先看看能不能写得更具体")
+
+    warns.extend(near_duplicates(cards))
+
     if args.stats:
         print(f"卡片总数: {len(cards)}")
         print("按场景:", dict(Counter(c.get("scene") for c in cards)))
         print("按难度:", dict(sorted(Counter(c.get("difficulty") for c in cards).items())))
         print("按阶段:", dict(Counter(s for c in cards for s in c.get("stage", []))))
         print("按风格:", dict(Counter(e.get("style") for c in cards for e in c.get("examples", []))))
+        print(f"标签种数: {len(tag_counts)}（只用一次的 {len(single_tags)} 个）")
+        print("goal 种数:", len(goal_counts))
 
     if warns:
         print(f"\n警告 {len(warns)} 条:")

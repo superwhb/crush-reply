@@ -1,0 +1,3 @@
+{"query": "她之前说想去那家店，我当时没接话", "scene": "meetup", "expect": ["meetup-001"]}
+{"query": "她说我发的地方太远，来回两个钟头", "scene": "meetup", "expect": ["meetup-028"]}
+{"query": "她说跟我还是当朋友更合适", "scene": "meetup", "expect": ["meetup-007"]}

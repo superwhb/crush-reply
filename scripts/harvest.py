@@ -209,26 +209,36 @@ def check_text(text: str, low: int, high: int) -> str | None:
 
 # ---------- plan ----------
 
-def cmd_plan(args) -> int:
-    day = parse_day(args.day)
-    cutoff = (day - timedelta(days=args.avoid_days)).isoformat()
+def plan_groups(day: date, n: int, avoid_days: int = 14) -> tuple[list[dict], list[str]]:
+    """今天该搜哪几组、其中哪几组最近搜过。intel.py 也走这一个函数。"""
+    cutoff = (day - timedelta(days=avoid_days)).isoformat()
     recent = {row.get("topic") for row in load_jsonl(SEEN)
               if row.get("topic") and str(row.get("date", "")) >= cutoff}
-    start = day.toordinal() % len(GROUPS)
-    picked = []
-    for step in range(len(GROUPS)):
-        group = GROUPS[(start + step) % len(GROUPS)]
-        if group["topic"] in recent:
-            continue
-        picked.append(group)
-        if len(picked) >= args.n:
-            break
+    n = max(n, 1)
+    if n < len(GROUPS) and len(GROUPS) % n == 0:
+        start = (day.toordinal() * n) % len(GROUPS)
+    else:
+        start = day.toordinal() % len(GROUPS)
+    order = [GROUPS[(start + i) % len(GROUPS)] for i in range(len(GROUPS))]
 
+    # 先挑最近没搜过的，再回头补最近搜过的。
+    fresh = [g for g in order if g["topic"] not in recent]
+    stale = [g for g in order if g["topic"] in recent]
+    picked = (fresh + stale)[:n]
+    hot = [g["topic"] for g in picked if g["topic"] in recent]
+    return picked, hot
+
+
+def cmd_plan(args) -> int:
+    day = parse_day(args.day)
+    picked, hot = plan_groups(day, args.n, args.avoid_days)
     if not picked:
         print("最近都搜过了，隔几天再来。")
         return 0
 
     print(f"# {day.isoformat()} 今日检索（{len(picked)} 组）\n")
+    if hot:
+        print(f"> 注意：{'、'.join(hot)} 最近搜过，可以只看没读过的那几条。\n")
     for group in picked:
         print(f"## {group['topic']}  → 场景 `{group['scene']}`")
         for q in group["queries"]:
@@ -242,7 +252,7 @@ def cmd_plan(args) -> int:
 # ---------- check ----------
 
 def cmd_check(args) -> int:
-    from query import load_cards, tokenize  # 延迟导入，plan 不需要它
+    from index import load_cards, tokenize  # 延迟导入，plan 不需要它
 
     errors: list[str] = []
     warns: list[str] = []

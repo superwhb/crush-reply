@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""crush-reply 多轮链检索。
+"""多轮链检索。卡片解决「这一条怎么回」，多轮链解决「回完她再说什么，你怎么接」。
 
-卡片解决「这一条怎么回」，多轮链解决「回完她再说什么，你怎么接」。
+索引跟 query.py 共用 scripts/index.py，不再各自实现一套。
+
 用法:
     python scripts/thread.py "她说食堂难吃，我回完她说那你去给我做"
     python scripts/thread.py --scene conflict --top 2 "她还在生气"
@@ -14,7 +15,9 @@ import json
 import sys
 from pathlib import Path
 
-from query import bm25, scene_boost, tokenize
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from index import SCENES, Index  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 THREAD_DIR = ROOT / "data" / "threads"
@@ -41,11 +44,11 @@ def load_threads() -> list[dict]:
     return threads
 
 
-def index_text(thread: dict) -> str:
-    turns = thread.get("turns", [])
+def thread_text(thread: dict) -> str:
+    turns = thread.get("turns") or []
     parts = [
         str(thread.get("title", "")) * 3,
-        " ".join(thread.get("tags", [])) * 3,
+        " ".join(thread.get("tags") or []) * 3,
         str(thread.get("premise", "")) * 2,
         " ".join(str(t.get("her", "")) for t in turns),
         " ".join(str(t.get("you", "")) for t in turns),
@@ -56,13 +59,12 @@ def index_text(thread: dict) -> str:
 
 def render(thread: dict, rank: int) -> str:
     lines = [
-        f"[{rank}] {thread['id']}  {thread['title']}   难度{thread['difficulty']}",
+        f"[{rank}] {thread['id']}  {thread['title']}   难度{thread.get('difficulty', 1)}",
         f"    前提: {thread['premise']}",
-        "    走向:",
     ]
-    for i, turn in enumerate(thread["turns"], 1):
-        lines.append(f"      {i}. 她: {turn['her']}")
-        lines.append(f"         你: {turn['you']}   ({turn['why']})")
+    for i, turn in enumerate(thread.get("turns") or [], 1):
+        lines.append(f"    {i}. 她: {turn.get('her', '')}")
+        lines.append(f"       你: {turn.get('you', '')}（{turn.get('why', '')}）")
     lines.append(f"    收尾: {thread['exit']}")
     return "\n".join(lines)
 
@@ -71,65 +73,38 @@ def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-    parser = argparse.ArgumentParser(description="crush-reply 多轮链检索")
-    parser.add_argument("query", nargs="*", help="当前聊到哪儿了")
-    parser.add_argument("--scene", help="只看某个场景")
-    parser.add_argument("--top", type=int, default=3)
+    parser = argparse.ArgumentParser(description="多轮链检索")
+    parser.add_argument("query", nargs="*")
+    parser.add_argument("--scene", choices=sorted(SCENES))
+    parser.add_argument("--top", type=int, default=2)
     parser.add_argument("--json", action="store_true")
-    parser.add_argument("--list", action="store_true")
+    parser.add_argument("--list", action="store_true", help="只列出有哪些链")
     args = parser.parse_args()
 
-    threads = load_threads()
-
     if args.list:
-        for t in threads:
-            print(f"{t['id']:<16} {t['title']:<14} {len(t['turns'])} 轮  难度{t['difficulty']}")
+        for thread in load_threads():
+            turns = len(thread.get("turns") or [])
+            print(f"{thread['id']:<24} {thread['title']:<16} {turns} 轮  难度{thread.get('difficulty', 1)}")
         return
 
     query = " ".join(args.query).strip()
     if not query:
-        parser.error("给一句现在的情况，或者用 --list 看全部")
+        parser.error("给一句她说的话，或者描述聊到哪一步卡住了")
 
-    pool = [t for t in threads if not args.scene or t["scene"] == args.scene]
-    if not pool:
-        sys.exit(f"场景 {args.scene} 下没有多轮链")
-
-    tfs, df, avgdl = _reindex(pool)
-    qtokens = tokenize(query)
-    scored = []
-    for thread, tf in zip(pool, tfs):
-        s = bm25(qtokens, tf, df, avgdl, len(pool)) + scene_boost(query, thread)
-        scored.append((s, thread))
-    scored.sort(key=lambda pair: (-pair[0], pair[1]["id"]))
-    top = [(s, t) for s, t in scored if s > 0][: args.top]
-
+    index = Index(load_threads(), text_fn=thread_text)
+    top = index.search(query, top=args.top, scene=args.scene)
     if not top:
-        print("没有匹配的多轮链，换个说法，或者用 --list。", file=sys.stderr)
+        print("没有匹配的多轮链。换个说法，或者先看 scripts/query.py --list。", file=sys.stderr)
         sys.exit(3)
 
     if args.json:
         print(json.dumps([{"score": round(s, 3), **t} for s, t in top], ensure_ascii=False, indent=2))
         return
 
-    print(f"查询: {query}    命中 {len(top)} 条\n")
     for i, (_, thread) in enumerate(top, 1):
         print(render(thread, i))
         print()
-    print("提醒: 多轮链给的是走向和节奏。台词要按你自己的说法重写，别照念。")
-
-
-def _reindex(pool: list[dict]):
-    """按 index_text 建索引，工整一点单独放开。"""
-    from collections import Counter
-    tfs, df = [], Counter()
-    for thread in pool:
-        tf = Counter(tokenize(index_text(thread)))
-        tfs.append(tf)
-        for token in tf:
-            df[token] += 1
-    lens = [sum(tf.values()) for tf in tfs]
-    avgdl = sum(lens) / len(lens) if lens else 1.0
-    return tfs, df, avgdl
+    print("提醒: 链是节奏参考，不是台词。看她回的长短再决定下一句，别一次把四轮都说完。")
 
 
 if __name__ == "__main__":

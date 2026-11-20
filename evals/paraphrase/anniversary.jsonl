@@ -1,0 +1,3 @@
+{"query": "她端了蛋糕出来，我一点准备都没有", "scene": "anniversary", "expect": ["anniversary-025"]}
+{"query": "她说生日别送东西，送了反而有压力", "scene": "anniversary", "expect": ["anniversary-026"]}
+{"query": "她问我记不记得我们哪天开始的", "scene": "anniversary", "expect": ["anniversary-011"]}

@@ -1,0 +1,10 @@
+{"query": "她说你们男的是不是都这样，嘴上说没事心里记着", "scene": "jealousy", "expect": ["jealousy-005"]}
+{"query": "她说周六有人约她看展，还没答应", "scene": "jealousy", "expect": ["jealousy-013"]}
+{"query": "她说我太黏了，她压力有点大", "scene": "jealousy", "expect": ["jealousy-017"]}
+{"query": "她三句话不离一个男演员，说追他五年了", "scene": "jealousy", "expect": ["jealousy-027"]}
+{"query": "她说今天跟阿哲吃饭，他请的", "scene": "jealousy", "expect": ["jealousy-001"]}
+{"query": "我打了三行字又删掉，最后只发了一个嗯", "scene": "jealousy", "expect": ["jealousy-012"]}
+{"query": "她说前任挺细心的，她生病天天送饭", "scene": "jealousy", "expect": ["jealousy-031"]}
+{"query": "她说她朋友觉得我配不上她，她跟朋友吵了一架", "scene": "jealousy", "expect": ["jealousy-040"]}
+{"query": "她发来团建合照，旁边是个男同事", "scene": "jealousy", "expect": ["jealousy-004"]}
+{"query": "她给一个男生的自拍点赞，还评论身材可以", "scene": "jealousy", "expect": ["jealousy-015"]}

@@ -20,15 +20,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from query import bm25, load_cards, scene_boost, tokenize  # noqa: E402
-from thread import index_text as thread_text, load_threads  # noqa: E402
+import paths  # noqa: E402
+from index import WEAK_SCORE, Index, load_cards  # noqa: E402
+from openers import pick as pick_openers  # noqa: E402
 from psych import load as load_psych, score as psych_score  # noqa: E402
+from thread import load_threads, thread_text  # noqa: E402
+from voice import samples as voice_samples  # noqa: E402
 
-PROFILE_DIR = ROOT / "profiles"
-VOICE_DIR = ROOT / "voices"
-OPENERS = ROOT / "data" / "openers.jsonl"
-
-VOICE_RULE = "每一句都按「我的说话习惯」写：句长、标点、表情、连发几条、常用词。他不会用的词一个都别用。"
+VOICE_RULE = "每一句都按「我的说话习惯」写：句长、标点、表情、连发几条、常用词。你不会用的词一个都别用。"
 
 OPENING_RULES = f"""输出要求（照这个格式，别写别的）：
 【挑哪一条】从上面三条里选一条最适合现在用的，说清为什么这条而不是那两条。
@@ -50,9 +49,9 @@ OUTPUT_RULES = f"""输出要求（照这个格式，别写别的）：
 def read_profile(name: str | None) -> str:
     if not name:
         return "（没有提供画像。缺了这层，回复会偏通用，建议先跑 python scripts/profile.py new 代号）"
-    path = PROFILE_DIR / f"{name}.md"
+    path = paths.profiles_dir() / f"{name}.md"
     if not path.exists():
-        return f"（没找到 profiles/{name}.md，先跑 python scripts/profile.py new {name}）"
+        return f"（没找到 {path.name}，先跑 python scripts/profile.py new {name}）"
     lines = []
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
@@ -69,10 +68,10 @@ def read_profile(name: str | None) -> str:
 
 
 def read_voice(name: str | None) -> str:
-    """读说话风格档案：去掉 HTML 注释和标题外的空行，保留样本和口径。"""
+    """读说话风格档案：去掉 HTML 注释，保留样本和口径。"""
     if not name:
         return ""
-    path = VOICE_DIR / f"{name}.md"
+    path = paths.voices_dir() / f"{name}.md"
     if not path.exists():
         return ""
     lines: list[str] = []
@@ -87,63 +86,20 @@ def read_voice(name: str | None) -> str:
             continue
         if stripped:
             lines.append(stripped)
-    return "\n".join(lines)
+    body = "\n".join(lines)
+    # 模板里只有占位符、没有真样本，等于没建：别把空模板当成「我的说话习惯」喂给模型。
+    if not voice_samples(body):
+        return ""
+    return body
 
 
-def card_scores(query: str, scene: str | None) -> list[tuple[float, dict]]:
-    cards = load_cards()
-    pool = [c for c in cards if not scene or c["scene"] == scene]
-    if not pool:
-        return []
-    from collections import Counter
-
-    tfs, df = [], Counter()
-    for card in pool:
-        tf = Counter(tokenize(
-            str(card.get("title", "")) * 3 + " " + " ".join(card.get("tags", [])) * 3 + " "
-            + str(card.get("signal", "")) * 2 + " " + " ".join(e.get("text", "") for e in card.get("examples", []))
-        ))
-        tfs.append(tf)
-        for token in tf:
-            df[token] += 1
-    lens = [sum(tf.values()) for tf in tfs]
-    avgdl = sum(lens) / len(lens) if lens else 1.0
-    qtokens = tokenize(query)
-    scored = [(bm25(qtokens, tf, df, avgdl, len(pool)) + scene_boost(query, c), c) for tf, c in zip(tfs, pool)]
-    scored.sort(key=lambda pair: (-pair[0], pair[1]["id"]))
-    return [(s, c) for s, c in scored if s > 0]
+def search_cards(index: Index, query: str, top: int, scene: str | None,
+                 stage: str | None, min_difficulty: int | None) -> list[tuple[float, dict]]:
+    return index.search(query, top=top, scene=scene, stage=stage, min_difficulty=min_difficulty)
 
 
-def search_cards(query: str, top: int, scene: str | None) -> list[dict]:
-    return [c for _, c in card_scores(query, scene)[:top]]
-
-
-def search_threads(query: str, top: int) -> list[dict]:
-    threads = load_threads()
-    from collections import Counter
-
-    tfs, df = [], Counter()
-    for thread in threads:
-        tf = Counter(tokenize(thread_text(thread)))
-        tfs.append(tf)
-        for token in tf:
-            df[token] += 1
-    lens = [sum(tf.values()) for tf in tfs]
-    avgdl = sum(lens) / len(lens) if lens else 1.0
-    qtokens = tokenize(query)
-    scored = [(bm25(qtokens, tf, df, avgdl, len(threads)) + scene_boost(query, t), t) for tf, t in zip(tfs, threads)]
-    scored.sort(key=lambda pair: (-pair[0], pair[1]["id"]))
-    return [t for s, t in scored if s > 0][:top]
-
-
-def pick_openers(profile: str, n: int) -> list[dict]:
-    if not OPENERS.exists():
-        return []
-    rows = [json.loads(line) for line in OPENERS.read_text(encoding="utf-8").splitlines() if line.strip()]
-    # 画像里有「近期事件」就优先挑她提过的事
-    has_event = "近期事件" in profile and "：" in profile.split("近期事件", 1)[1][:2]
-    rows.sort(key=lambda o: (o.get("anchor") != "她提过的事", o.get("difficulty", 1), o["id"]))
-    return rows[:n] if has_event else rows[:n]
+def search_threads(index: Index, query: str, top: int, scene: str | None) -> list[dict]:
+    return [t for _, t in index.search(query, top=top, scene=scene)]
 
 
 def search_concepts(query: str, scene: str | None, top: int = 2) -> list[dict]:
@@ -157,6 +113,8 @@ def search_concepts(query: str, scene: str | None, top: int = 2) -> list[dict]:
     pool = [i for i in items if not scene or scene in i.get("scenes", [])]
     if not pool:
         return []
+    from index import tokenize
+
     tokens = tokenize(query)
     scored = sorted(((psych_score(tokens, i), i) for i in pool), key=lambda p: (-p[0], p[1]["id"]))
     return [i for s, i in scored if s > 0][:top]
@@ -169,8 +127,6 @@ def wants_openers(query: str, flag: bool) -> bool:
     return any(word in query for word in ("话题", "开口", "说什么", "没话说", "怎么聊", "找点事"))
 
 
-WEAK_SCORE = 6.0
-
 FALLBACK_HINT = """## 库里没有这种情况
 先别硬凑。跑：
     python scripts/find.py "她的原话"
@@ -179,12 +135,15 @@ FALLBACK_HINT = """## 库里没有这种情况
 
 
 def render_pack(query: str, profile_name: str | None, scene: str | None,
-                with_openers: bool, voice_name: str | None = None) -> str:
+                with_openers: bool, voice_name: str | None = None,
+                stage: str | None = None, min_difficulty: int | None = None) -> str:
     profile = read_profile(profile_name)
     voice = read_voice(voice_name or profile_name)
-    scored = card_scores(query, scene) if query else []
-    cards = [card for _, card in scored[:3]]
-    threads = search_threads(query, 2) if query else []
+    cards_index = Index(load_cards())
+    threads_index = Index(load_threads(), text_fn=thread_text)
+    scored = search_cards(cards_index, query, 3, scene, stage, min_difficulty) if query else []
+    cards = [card for _, card in scored]
+    threads = search_threads(threads_index, query, 2, scene) if query else []
     concepts = search_concepts(query, scene) if query else []
     openers = pick_openers(profile, 3) if wants_openers(query, with_openers) else []
 
@@ -196,7 +155,7 @@ def render_pack(query: str, profile_name: str | None, scene: str | None,
         out += ["## 我的说话习惯（必须模仿，不是参考）", voice, ""]
     else:
         out += ["## 我的说话习惯",
-                "（还没建 voices/ 档案。先按普通口语写，并在回答最后一行提醒我贴三条自己发过的消息。）", ""]
+                "（还没建说话风格档案。先按普通口语写，并在回答最后一行提醒我贴三条自己发过的消息。）", ""]
 
     if query:
         out += ["## 现在的现场", f"她说的 / 当前情况：{query}", ""]
@@ -210,7 +169,7 @@ def render_pack(query: str, profile_name: str | None, scene: str | None,
             out.append(f"    · 续法：{card['followup']}")
         out.append("")
         if scored and scored[0][0] < WEAK_SCORE:
-            out += [f"> 提醒：这几张只是词对上了（最高分 {scored[0][0]:.1f}），情境不一定真对。"
+            out += [f"> 提醒：这几张只是词对上了（最高分 {scored[0][0]:.1f}，低于 {WEAK_SCORE:.0f}），情境不一定真对。"
                     "如果读完觉得不对路，先跑 scripts/find.py 去外面找，别硬套。", ""]
     elif query:
         out += [FALLBACK_HINT, ""]
@@ -237,6 +196,8 @@ def render_pack(query: str, profile_name: str | None, scene: str | None,
         out.append("")
 
     out += [OPENING_RULES if opening_only else OUTPUT_RULES]
+    if cards:
+        out += ["", f"回答完之后，把她的反应记一条，下次检索会参考：python scripts/outcome.py log {cards[0]['id']} --reaction 回了"]
     return "\n".join(out)
 
 
@@ -246,29 +207,35 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="把画像、说话习惯、卡片、多轮链拼成提示包")
     parser.add_argument("query", nargs="*", help="她说了什么，或者你想找什么话题")
-    parser.add_argument("--profile", help="profiles/ 下的画像代号，比如 小鹿")
-    parser.add_argument("--voice", help="voices/ 下的风格代号，默认跟画像同名")
+    parser.add_argument("--profile", help="画像代号，比如 小鹿")
+    parser.add_argument("--voice", help="说话风格代号，默认跟画像同名")
     parser.add_argument("--scene", help="限定场景")
+    parser.add_argument("--stage", help="限定关系阶段：初识 / 聊得来 / 暧昧 / 已在恋爱")
+    parser.add_argument("--min-difficulty", type=int, choices=[1, 2, 3], help="只看难度不低于这个值的卡")
     parser.add_argument("--openers", action="store_true", help="附上开场话题候选")
     parser.add_argument("--json", action="store_true", help="输出 JSON")
     args = parser.parse_args()
 
+    paths.ensure()
     query = " ".join(args.query).strip()
     if args.json:
+        cards_index = Index(load_cards())
+        threads_index = Index(load_threads(), text_fn=thread_text)
         pack = {
             "query": query,
             "profile": read_profile(args.profile),
             "voice": read_voice(args.voice or args.profile),
-            "cards": search_cards(query, 3, args.scene) if query else [],
-            "threads": search_threads(query, 2) if query else [],
+            "cards": [c for _, c in search_cards(cards_index, query, 3, args.scene, args.stage, args.min_difficulty)] if query else [],
+            "threads": search_threads(threads_index, query, 2, args.scene) if query else [],
             "openers": pick_openers(read_profile(args.profile), 3) if wants_openers(query, args.openers) else [],
             "concepts": search_concepts(query, args.scene) if query else [],
-            "fallback": bool(query) and not search_cards(query, 3, args.scene),
+            "fallback": bool(query) and not search_cards(cards_index, query, 3, args.scene, args.stage, args.min_difficulty),
         }
         print(json.dumps(pack, ensure_ascii=False, indent=2))
         return
 
-    print(render_pack(query, args.profile, args.scene, args.openers, args.voice))
+    print(render_pack(query, args.profile, args.scene, args.openers, args.voice,
+                      args.stage, args.min_difficulty))
 
 
 if __name__ == "__main__":

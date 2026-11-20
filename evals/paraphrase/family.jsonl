@@ -1,0 +1,3 @@
+{"query": "她妈让她周末去见一个人，说条件不错", "scene": "family", "expect": ["family-001"]}
+{"query": "她爸说再在外面漂着就别回家了", "scene": "family", "expect": ["family-004"]}
+{"query": "她妈说他们准备办手续分开了", "scene": "family", "expect": ["family-025"]}

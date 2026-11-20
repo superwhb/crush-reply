@@ -8,7 +8,7 @@
 # 1. 拿一份
 git clone https://github.com/superwhb/crush-reply.git
 cd crush-reply
-python scripts/doctor.py          # 八行 ok 就说明环境没问题
+python scripts/doctor.py          # 十一行 ok 就说明环境没问题
 
 # 2. 找一张你觉得写错的卡：跑一句真会出现的对话
 python scripts/query.py --scene conflict "她生我气了，一句话都不回" --top 3
@@ -57,7 +57,13 @@ python scripts/lint_psych.py
 
 # 4. 试试别人能不能搜到你这张卡
 python scripts/query.py "你自己想的那句对方的话"
+
+# 5. 回归没被带坏
+python scripts/eval.py
+python -m unittest discover -s tests
 ```
+
+加卡最容易踩的是第 5 步：新卡可能把旧用例的正确答案挤到第二位。这是真实存在的情况，`eval.py` 会点名是哪一条，改卡或者改用例都行，别直接跳过去。
 
 需要 Python 3.9 以上，没有第三方依赖。
 
@@ -108,15 +114,28 @@ python scripts/psych.py --scene period  # 看看这个场景现在有哪几条
 
 ## 加新场景
 
-十个场景不够用的时候可以加，但要同时改五处：
+十个场景不够用的时候可以加，但要同时改六处：
 
 1. 新建 `data/scenes/<新场景>.jsonl`，至少 8 张卡才能单独立文件。
-2. `scripts/query.py` 的 `SCENES` 和 `SCENE_HINTS` 各加一条。
+2. `scripts/index.py` 的 `SCENES` 和 `SCENE_HINTS` 各加一条（所有检索都从这里取，改这一处就够了）。
 3. `scripts/thread.py` 的 `SCENES` 加名字（否则多轮链检索会忽略这个场景）。
 4. `scripts/lint_data.py` 和 `scripts/lint_extra.py` 的 `SCENES` 各加名字。
 5. `SKILL.md` 的场景表和文件地图各加一行。
+6. 新建 `evals/cases/<新场景>.jsonl` 和 `evals/paraphrase/<新场景>.jsonl`，各至少 10 条和 3 条；`evals/gate.json` 的 `scene_min_hit3` 会对这个场景生效，没有用例它就不受保护。
 
 没把握就先开 issue 说一句，别一口气提两百行。
+
+## 改用例
+
+用例是评测的地基，改动前先看清两条赛道的分工：
+
+- `evals/cases/<scene>.jsonl`：写用户真实会打出来的话，判定是 `expect` 里的卡 id（命中任意一张就算 hit@3，第 0 位算 hit@1）。**不要写「只认一张卡」**，除非你确认别的卡确实不该排前面。
+- `evals/paraphrase/<scene>.jsonl`：刻意避开卡里的关键词，用同义说法问。这条赛道是防「检索只会背原词」的，写的时候别看卡里怎么写。
+- `evals/offtopic.txt`：无关句，不进门槛，只用来看假阳性。加一句无关的话比删一条用例安全。
+
+改门槛要写清理由。把 `min_hit1` 从 0.95 降到 0.90 这种事，等于向用户承诺「二十次里错一次」，PR 里要说清为什么值。
+
+三种情况可以改用例而不改检索：卡本身写错了（那就先改卡）；这个问法本来就该由人多问一句（那就写进 SKILL.md 的「库里没有怎么办」）；两个场景的卡互相抢，且都对（那就同时接受两张）。
 
 ## 审 PR 时看什么
 
@@ -124,4 +143,4 @@ python scripts/psych.py --scene period  # 看看这个场景现在有哪几条
 - 卡里的话你自己愿意发出去吗，读出来像不像真人。
 - 有没有把「套路」换个名字写进来。
 - `difficulty` 标得对不对：会让关系更糟的场合必须标 3。
-- 有没有顺手带上 `profiles/` 或 `voices/` 里的东西——那两份是本机私人物料，`.gitignore` 已经挡住，但复制粘贴进 issue 或 PR 也等于漏出去。
+- 有没有顺手带上 `~/.crush-reply/` 里的东西——画像、语气档案、结果记录都在仓库外，但复制粘贴进 issue 或 PR 也等于漏出去。

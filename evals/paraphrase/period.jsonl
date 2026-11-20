@@ -1,0 +1,3 @@
+{"query": "她说怎么坐都难受，腰酸得厉害", "scene": "period", "expect": ["period-004"]}
+{"query": "她说就缩在被子里不想动，也不看手机", "scene": "period", "expect": ["period-033"]}
+{"query": "她说下个月得先把药准备好，上次疼起来家里没药", "scene": "period", "expect": ["period-044"]}

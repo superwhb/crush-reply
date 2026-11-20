@@ -1,0 +1,3 @@
+{"query": "她说今天跟一个男生吃饭，对方请的", "scene": "jealousy", "expect": ["jealousy-001"]}
+{"query": "她说我太黏人，让她有点透不过气", "scene": "jealousy", "expect": ["jealousy-017"]}
+{"query": "她说以前那个人在她生病时天天送饭", "scene": "jealousy", "expect": ["jealousy-031"]}

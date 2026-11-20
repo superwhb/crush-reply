@@ -1,0 +1,10 @@
+{"query": "她说食堂的饭难吃到吐，这周第三次了", "scene": "daily", "expect": ["daily-001"]}
+{"query": "她说想吃炸鸡，又说自己在减肥", "scene": "daily", "expect": ["daily-011"]}
+{"query": "她晚上发一句好无聊啊", "scene": "daily", "expect": ["daily-027"]}
+{"query": "她说终于考完了只想躺着", "scene": "daily", "expect": ["daily-042"]}
+{"query": "她甩来一首歌让我听第三段", "scene": "daily", "expect": ["daily-003"]}
+{"query": "她说三门考试两个大作业还在图书馆", "scene": "daily", "expect": ["daily-012"]}
+{"query": "她问我在干嘛方便说话吗", "scene": "daily", "expect": ["daily-024"]}
+{"query": "她称完体重说今天开始不吃晚饭", "scene": "daily", "expect": ["daily-032"]}
+{"query": "她昨天没回，今天才说刚看到", "scene": "daily", "expect": ["daily-015"]}
+{"query": "她说周末没事在家躺两天很无聊", "scene": "daily", "expect": ["daily-016"]}

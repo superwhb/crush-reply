@@ -7,14 +7,15 @@
 ## 每天做什么（十分钟）
 
 ```bash
-python scripts/harvest.py plan            # 出今天该搜的三组词
+python scripts/intel.py                   # 先看今天的简报：检索词 + 每个词现在命中的卡 + 缺口
+python scripts/harvest.py plan            # 只要检索词
 # 用你的搜索工具（Claude/Codex/DSH 的联网搜索，或自己搜）搜这三组
 # 挑 2-3 篇没看过的，读完
 python scripts/harvest.py check           # 写完了校验 + 查重
 python scripts/harvest.py promote hb-0007 # 值得进库的，出卡片骨架
 ```
 
-`plan` 按日期轮转 12 组检索词，并跳过最近 10 天已经搜过的主题——所以你不会连着三天都在看「已读不回」。
+`plan` 按日期轮转 12 组检索词，`plan_groups()` 会跳过最近 14 天已经搜过的主题——所以你不会连着三天都在看「已读不回」。`intel.py` 是 `plan` 加一层对照：每个检索词都跑一遍检索，后面跟着它现在命中的卡和分数，分数低于提示线的单列进「库里可能缺的」。日报里那条评论就是它生成的，本地先跑一遍和线上看到的是同一份。
 
 ## 候选写在哪
 
@@ -51,7 +52,7 @@ python scripts/harvest.py promote hb-0007 # 值得进库的，出卡片骨架
 
 ```bash
 python scripts/find.py "她的原话"          # 猜场景 + 出检索词 + 给提炼模板
-python scripts/find.py "她的原话" --note   # 顺手记进 research/gaps/<日期>.md
+python scripts/find.py "她的原话" --note   # 顺手记进 ~/.crush-reply/gaps/<日期>.md
 ```
 
 `gaps/` 是一份流水帐，一行一条，只记「哪天、哪个场景、什么情况」。它不参与 CI 校验，也不需要格式整齐——它的用处是让「库里没有」这件事留下痕迹。攒到同一类出现三次，就值得补一张卡；一次都没重复过的，通常是个例，不用管。

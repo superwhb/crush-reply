@@ -1,0 +1,10 @@
+{"query": "我翻她聊天记录问这是谁，她解释完就不说话了", "scene": "conflict", "expect": ["conflict-010"]}
+{"query": "她说跟我想法完全不一样，然后就停了", "scene": "conflict", "expect": ["conflict-017"]}
+{"query": "我问周末去哪，她说都行你安排", "scene": "conflict", "expect": ["conflict-026"]}
+{"query": "她提上周说过的事，我说你说过吗，她当场不说话了", "scene": "conflict", "expect": ["conflict-001"]}
+{"query": "她说不想回家，再问只说家里又那样", "scene": "conflict", "expect": ["conflict-008"]}
+{"query": "我迟到一小时，散场她说今天一直在替我圆", "scene": "conflict", "expect": ["conflict-021"]}
+{"query": "她发烧自己去医院，回来说你就不能自己想到吗", "scene": "conflict", "expect": ["conflict-034"]}
+{"query": "冷战两天，她朋友圈发了句算了", "scene": "conflict", "expect": ["conflict-011"]}
+{"query": "吵完她私聊不回，群里照常接话", "scene": "conflict", "expect": ["conflict-024"]}
+{"query": "她突然说我们先冷静几天吧，问多久说不知道", "scene": "conflict", "expect": ["conflict-032"]}

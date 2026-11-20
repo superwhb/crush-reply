@@ -3,7 +3,7 @@
 
 `query.py` 找到的卡片都不对路时用它：它不联网，只做三件事——
 猜场景、把这个人自己的话变成几条能直接丢进搜索框的检索词、给一段提炼模板。
-搜完之后按 research/README.md 的口径提炼，再按 voices/ 的语气写回复。
+搜完之后按 research/README.md 的口径提炼，再按说话风格档案（~/.crush-reply/voices/）的句式写回复。
 
 用法:
     python scripts/find.py "她说她最近有点累，但又不说具体怎么了"
@@ -21,9 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from query import SCENE_HINTS, SCENES, load_cards  # noqa: E402
-
-GAPS = ROOT / "research" / "gaps"
+from index import SCENE_HINTS, SCENES, load_cards  # noqa: E402
 
 # 卡片标签之外，用户嘴里真正会出现的词。没命中标签时靠它兜底。
 LEXICON = [
@@ -122,7 +120,7 @@ def print_report(text: str, scene: str | None, terms: list[str], queries: list[t
     print("- 她的原话里，真正在要的是什么（被接住 / 被认同 / 要空间 / 想推进）")
     print("- 网上那些回复里，共同的动作是什么（先接情绪，还是先给方案）")
     print("- 哪一种做法在你这个阶段不成立，为什么")
-    print("- 你会用的一句：用 voices/<代号>.md 里的句式和标点重写，不要用网上的原句\n")
+    print("- 你会用的一句：用你说话风格档案里的句式和标点重写，不要用网上的原句\n")
 
     print("## 还要问用户的（一次问完，别来回问）\n")
     print("- 她这条消息后面还有没有别的？前一句是什么")
@@ -136,9 +134,12 @@ def print_report(text: str, scene: str | None, terms: list[str], queries: list[t
 
 
 def save_note(text: str, scene: str | None) -> Path:
-    GAPS.mkdir(parents=True, exist_ok=True)
+    import paths
+
+    folder = paths.gaps_dir()
+    folder.mkdir(parents=True, exist_ok=True)
     today = dt.date.today().isoformat()
-    path = GAPS / f"{today}.md"
+    path = folder / f"{today}.md"
     stamp = dt.datetime.now().strftime("%H:%M")
     block = f"- {stamp} [{scene or '?'}] {text}\n"
     if path.exists():
@@ -162,7 +163,7 @@ def main() -> None:
     parser.add_argument("query", nargs="*", help="她的原话，或者你描述的情况")
     parser.add_argument("--scene", choices=sorted(SCENES), help="已经知道场景就直接指定")
     parser.add_argument("--json", action="store_true", help="输出 JSON")
-    parser.add_argument("--note", action="store_true", help="顺手把这条缺口记到 research/gaps/")
+    parser.add_argument("--note", action="store_true", help="顺手把这条缺口记到你的数据目录（默认 ~/.crush-reply/gaps/）")
     args = parser.parse_args()
 
     text = " ".join(args.query).strip()

@@ -1,0 +1,3 @@
+{"query": "她吐槽公司饭堂的菜越来越难吃", "scene": "daily", "expect": ["daily-001"]}
+{"query": "她说下周要考三门，还有作业没动", "scene": "daily", "expect": ["daily-012"]}
+{"query": "她第二天才回我，说之前没看见", "scene": "daily", "expect": ["daily-015"]}

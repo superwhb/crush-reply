@@ -1,0 +1,10 @@
+{"query": "凌晨一点她问还醒着吗，说睡不着", "scene": "latenight", "expect": ["latenight-001"]}
+{"query": "她凌晨发来一首歌，一个字都没说", "scene": "latenight", "expect": ["latenight-007"]}
+{"query": "她半夜发两个字在吗，后面没下文", "scene": "latenight", "expect": ["latenight-018"]}
+{"query": "她说数到两百还是醒着，明天八点还要开会", "scene": "latenight", "expect": ["latenight-022"]}
+{"query": "她说今天有点 emo，说不上来为什么", "scene": "latenight", "expect": ["latenight-002"]}
+{"query": "她说算了不说了，不想麻烦你", "scene": "latenight", "expect": ["latenight-016"]}
+{"query": "她说这周三个截止日，连吃饭都在改东西", "scene": "latenight", "expect": ["latenight-028"]}
+{"query": "她说一想到明天那个工位就烦得睡不着", "scene": "latenight", "expect": ["latenight-036"]}
+{"query": "她说最近事情全堆在一起，扛不住了", "scene": "latenight", "expect": ["latenight-003"]}
+{"query": "她说别人工作感情都顺，就她这样", "scene": "latenight", "expect": ["latenight-013"]}

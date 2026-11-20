@@ -1,6 +1,6 @@
 # crush-reply
 
-**暧昧关系里的回复助手。** 500 张情境卡、107 条多轮链、100 条开场白、24 条挂着文献的心理学概念、一份对方画像、一份你自己的说话风格档案，和一个零依赖检索脚本。你不知道怎么回的时候，它帮你把话想清楚，再按你自己的说话习惯写出来。
+**暧昧关系里的回复助手。** 500 张情境卡、107 条多轮链、100 条开场白、24 条挂着文献的心理学概念、一份对方画像、一份你自己的说话风格档案，和一个零依赖检索脚本。你不知道怎么回的时候，它帮你把话想清楚，再按你自己的说话习惯写出来。用完之后可以记一条「她接没接住」，检索会慢慢偏向在你这里有效的卡。
 
 [![license](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.9%2B-3776ab)](scripts/)
@@ -118,6 +118,9 @@ python scripts/thread.py "她说想辞职，说完就不说话了"
 
 # 想开口，但没由头
 python demo.py "想找个话题，我们三天没聊了"
+
+# 只要开场话题候选
+python scripts/openers.py --anchor 她提过的事 --stage 暧昧 -n 3
 ```
 
 ```text
@@ -148,7 +151,7 @@ python demo.py "想找个话题，我们三天没聊了"
 提醒: 卡片给的是方向，不要照抄。用你自己的话、按对方的画像重写成一句能直接发出去的微信。
 ```
 
-检索是纯 Python：中文按字符二元组做倒排，BM25 排序，按场景和字段加权。没有 jieba，没有依赖，没有 API key。
+检索是纯 Python：中文按整段 + 相邻二元组 + 单字建倒排索引，BM25 排序，按场景和字段加权。单字也能搜（「疼」「累」这种最常见的输入不会 0 命中）。没有 jieba，没有依赖，没有 API key。
 
 `demo.py` 是懒人版：一条命令把画像、三张卡、两条多轮链、三条开场白拼成一段材料，末尾附固定输出格式。它**不调用任何模型**，产出可以整段贴给 ChatGPT / Claude / DeepSeek 用。
 
@@ -198,7 +201,7 @@ git clone https://github.com/superwhb/crush-reply.git ~/.dsh/skills/crush-reply
 python scripts/doctor.py
 ```
 
-它会查五件事：frontmatter 的 `name` 和目录名是否一致、必需文件是否齐全（11 个）、数据文件是不是 UTF-8 无 BOM、三个 lint 加一条检索冒烟能不能过、这个目录在不在某个客户端的 skills 路径下。全过就八行 `ok`；有问题会直接告诉你是哪一条、怎么改。
+它会查五类事：frontmatter 的 `name` 和目录名是否一致、必需文件是否齐全（17 个）、数据文件是不是 UTF-8 无 BOM、三个 lint 加单字检索加回归测试能不能过、画像和说话风格存到了哪里。全过就十一行 `ok`；有问题会直接告诉你是哪一条、怎么改。
 
 ```text
 crush-reply doctor · /Users/you/.claude/skills/crush-reply
@@ -208,7 +211,7 @@ python 3.12.1
   ok  frontmatter name = crush-reply
   ok  装在 Claude Code 的 skills 目录下
 二、数据文件
-  ok  11 个必需文件都在
+  ok  17 个必需文件都在
 三、编码
   ok  数据文件都是 UTF-8 无 BOM
 四、校验与检索
@@ -216,8 +219,12 @@ python 3.12.1
   ok  多轮链与开场白 lint 通过
   ok  心理学概念 lint 通过
   ok  检索冒烟通过（period 能命中）
+  ok  单字检索通过（「疼」能命中）
+  ok  回归测试过门槛
+五、你的数据
+  ok  画像 / 说话风格 / 结果记录: ~/.crush-reply
 ----------------------------------------------
-全部通过（8 项）。可以开始用了
+全部通过（11 项）。可以开始用了
 ```
 
 ### 装不上怎么办
@@ -237,9 +244,11 @@ python 3.12.1
 python scripts/profile.py new 小鹿
 ```
 
-然后编辑 `profiles/小鹿.md`，填关系阶段、MBTI、星座、作息、饮食、雷区、近期事件。**只填知道的，不确定就空着，不要替对方编。**
+然后编辑 `~/.crush-reply/profiles/小鹿.md`，填关系阶段、对方性别、MBTI、星座、作息、饮食、雷区、近期事件。**只填知道的，不确定就空着，不要替对方编。**
 
-再花五分钟填 `voices/` 里你自己的说话风格，贴几条你真发过的消息。有没有这个，回复像不像你，差别很大。
+再花五分钟填 `~/.crush-reply/voices/` 里你自己的说话风格，贴几条你真发过的消息。有没有这个，回复像不像你，差别很大。
+
+两处都在仓库外面：升级、`git pull`、重新 clone 都不会碰到你的数据。想放别处（比如同步目录）就设 `CRUSH_HOME`。
 
 ## 让它像你说话
 
@@ -300,7 +309,7 @@ ps-005  依恋焦虑   [Hazan & Shaver 1987 成人依恋研究]
 ```
 用户:「她发了个食堂菜的照片说又是这个，我该回啥」
    │
-   ├─ 1. 读画像      profiles/小鹿.md      关系阶段、MBTI、雷区、近期事件
+   ├─ 1. 读画像      ~/.crush-reply/profiles/  关系阶段、MBTI、雷区、近期事件
    ├─ 2. 定场景      daily / period / …    十个场景，选一个或两个
    ├─ 3. 检索        scripts/query.py      命中 3 张情境卡
    │                 scripts/thread.py     命中 2 条多轮链
@@ -340,9 +349,9 @@ python scripts/find.py "她说你根本不懂我在气什么"
 2. 把你这句原话拆成检索词——库里认得的标签词优先，认不得就用原话加引号
 3. 给一段提炼模板：她的原话 / 拆出来的检索词 / 搜完怎么提炼（她要什么、那些回复共同的动作、哪条在你这阶段不成立、你会发的一句）
 
-然后模型拿前两三条检索词去搜小红书、知乎、豆瓣小组，**只提炼结构，不抄句子**，最后用 `voices/` 的句式把那一句写出来。回答里必须写清「这个情况库里没有」，而不是假装检索到了。
+然后模型拿前两三条检索词去搜小红书、知乎、豆瓣小组，**只提炼结构，不抄句子**，最后用说话风格档案里的句式把那一句写出来。回答里必须写清「这个情况库里没有」，而不是假装检索到了。
 
-想留痕就加 `--note`，记进 `research/gaps/<日期>.md`。同一类出现三次，才值得补一张卡；只出现一次的，通常是个例，不用管。完整示例见 [库里没有这张卡的时候](examples/05-outside.md)。
+想留痕就加 `--note`，记进 `~/.crush-reply/gaps/<日期>.md`（设了 `CRUSH_HOME` 就跟着走）。同一类出现三次，才值得补一张卡；只出现一次的，通常是个例，不用管。完整示例见 [库里没有这张卡的时候](examples/05-outside.md)。
 
 ## 数据
 
@@ -370,19 +379,33 @@ python scripts/find.py "她说你根本不懂我在气什么"
 
 ## 检索质量
 
-`evals/cases.jsonl` 是 40 条真人会问的句子，十个场景每个至少三条，每条写明应该命中哪一类卡。改检索参数就跑：
+评测不是一堆关键词，是三条赛道：
+
+- `evals/cases/<scene>.jsonl`：十个场景各 10 条，共 100 条，写用户真实会打出来的话，判定标准是「应该命中哪几张卡」的具体 id。
+- `evals/paraphrase/<scene>.jsonl`：10 个场景各 3 条，故意避开卡里的原词，测「换个说法还找不找得到」。
+- `evals/offtopic.txt`：12 条明显无关的句子（开会、报表、快递），用来量假阳性，不参与门槛。
+
+门槛按场景卡，不按总数，任何一个场景掉线就红（`evals/gate.json`）：直接问法 hit@1 95%、hit@3 98%、MRR 95%；改写问法 hit@1 75%、hit@3 90%；单个场景 hit@3 不低于 90%（改写 60%）。
 
 ```bash
-python scripts/eval.py -v
+python scripts/eval.py -v          # 两条赛道逐场景报告
+python scripts/eval.py --calibrate # 相关与无关的 top1 分数分布，用来定「分数多低算没找到」
 ```
+
+现在的数字：
 
 ```text
-用例 40 条
-hit@1 37/40 = 92%
-hit@3 38/40 = 95%
+直接问法  100 条  hit@1 100%  hit@3 100%  MRR 100%  场景路由 100%
+改写问法   30 条  hit@1  97%  hit@3 100%  MRR  99%  场景路由 100%
+相关 top1 分数  min 44.0  中位 93.3
+无关 top1 分数  min  6.3  中位 15.3  max 21.6
 ```
 
-CI 要求 `hit@3 ≥ 90%`，跌破就红。这就是这个仓库不靠「我觉得搜得准」的地方：加卡可能把好结果挤下去，评测会挡住。现在剩下的两条 MISS 都是「这句话本身就该由人多问一句」——问「我们算什么关系」这类要在对话里才判得准的句子，检索给的三张卡都只是近邻，`SKILL.md` 里写明这时候宁可说实话也不要硬指一张。
+这组数字说明两件事。第一，改写问法和直接问法的差距只有 1 条，说明分数不是靠原词硬匹配撑起来的。第二，相关与无关的分数带是分开的（44 对 21.6），所以检索给不出卡时会提示「只是词对上了」，而不是硬塞一张。
+
+`--calibrate` 存在的意义是：调参数时先看分布有没有重叠，再看命中率。只有命中率好看、分布重叠的检索，换一批说法就会崩。
+
+CI 跑这套评测，另外还有 14 个单元测试挡住「改一个函数顺手改坏另一条路」。
 
 ## 它怎么长大
 
@@ -410,16 +433,21 @@ python scripts/harvest.py promote hb-0007 # 值得进库的，出卡片骨架，
 
 `check` 会把候选和现有 500 张卡比一遍，列出最近的卡和共同词，但**只提示不裁决**：一句话的情境做自动查重不可靠，最后那一眼得人看。
 
-### 每天自动开一个 issue
+### 每天自动更新一份情报，每周一个 issue
 
-这三步现在有 GitHub Actions 版，`.github/workflows/daily.yml`：
+这四步现在有 GitHub Actions 版，`.github/workflows/daily.yml`：
 
-- 每天 09:30（北京时间）跑 `harvest.py plan`，把当天的三组检索词开成一个 issue，标签 `daily-intel`
-- issue 里写清「怎么算做完」：挑 2-3 篇搜、只提炼结构、`verdict` 怎么填
-- 你或者任何路过的人都能认领：把候选写进 `research/inbox/<日期>.jsonl`、开 PR，CI 跑 `harvest.py check`
-- 当天已经有 open 的 issue 时，它改成在该 issue 下追加评论，不会刷屏
+- 每天 09:30（北京时间）跑 `intel.py`，把「今天搜什么」和「库里现在有什么」对成一份简报
+- 简报里每个检索词后面都跟着它现在命中的卡和分数，分数低于阈值的单列成「库里可能缺的」，不用再自己一条条去查
+- 一周一个 issue（标题带 ISO 周），每天往同一个 issue 追加一条评论，不会一天开一个把列表刷满
+- 同一天重复触发不会写两遍：每条评论带一个隐藏标记 `<!-- intel:<日期> -->`，脚本先查后写
+- 正文写清「怎么算做完」：挑 2-3 篇搜、只提炼结构、`verdict` 怎么填；把候选写进 `research/inbox/<日期>.jsonl`、开 PR，CI 跑 `harvest.py check`
 
-所以这个仓库的「长大」不依赖某个人记得每天去看，日历会推它。
+这样日报就不是「一排没人看的 open issue」，而是一份能对着库扫一眼、直接看出该补哪张卡的清单。
+
+```bash
+python scripts/intel.py            # 本地先看一眼今天会推什么
+```
 
 ## 加内容
 
@@ -442,7 +470,7 @@ python scripts/eval.py           # 检索回归
 
 `new_card.py` 做三件事：自动取下一个没被占用的 id、按 `lint_data.py` 的同一套规则当场验、写进去之后整体 lint 不过就自动回滚。它和 CI 用的是同一个 `check_card()`，不会出现「本地过了 CI 红」这种事。
 
-CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_psych.py`、`lint_skill.py` 和 `eval.py`。红线词、称呼词、超长示例、枚举外的值、诊断式表述、让检索变差的改动，都进不来。细节看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_psych.py`、`lint_skill.py`、`eval.py` 和 `tests/`。红线词、称呼词、超长示例、枚举外的值、诊断式表述、让检索变差的改动，都进不来。细节看 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 内容来源与免责声明
 
@@ -451,7 +479,7 @@ CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_psych.py`、`lint_skill.py` �
 **它不是什么。**
 - 不是心理咨询，不诊断任何人的依恋类型或人格，`lint_psych.py` 里禁掉了「你就是」「确诊」「治愈」这类说法。
 - 不保证结果。同一句话对不同的人效果相反，这套东西只帮你把想说的说清楚。
-- 不采集你的聊天记录。所有画像、语气档案、缺口记录都在你本地，`.gitignore` 里排除了 `profiles/*.md`、`voices/*.md` 和 `research/gaps/*.md`。
+- 不采集你的聊天记录。画像、语气档案、缺口记录、结果记录默认都存在 `~/.crush-reply/`，**不在仓库里**，所以 `git status` 永远不会看到它们；这些目录也不进任何备份或同步，除非你自己去同步 `~/.crush-reply/`。
 
 **遇到真问题的时候。** 如果对方出现自伤、绝望、被家暴、涉及未成年人的信号，这个仓库的所有话术都不适用。先确认安全，再联系她的家人朋友，中国大陆可拨 12356（心理援助热线），紧急情况 110 / 120。`latenight` 场景里这类卡一律标注「优先确认安全」，不给调情建议。
 
@@ -467,6 +495,7 @@ CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_psych.py`、`lint_skill.py` �
 - 不碰未成年人。
 - 出现自伤或绝望的信号，立刻停止恋爱建议，给专业资源（中国大陆可拨 12356），并建议告诉身边可信任的人。
 - 不承诺结果。不说「这样回她一定开心」。
+- 不代发消息。只给可以复制的话，不登录微信、不做自动发送、不读聊天记录；要上下文就让人把要回的那句贴过来。
 
 立场就一句：**帮你把想法说出来，不是帮你演一个人。**
 
@@ -486,15 +515,23 @@ CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_psych.py`、`lint_skill.py` �
 - [x] `scripts/doctor.py`：装完自检，五类常见问题直接点名
 - [x] `scripts/new_card.py`：加卡不写 JSON，当场校验、失败回滚
 - [x] issue / PR 模板：卡片缺口、报错、缺场景三类
+- [x] 单字检索：`疼`、`累`、`哭` 这种最常见的输入不再 0 命中
+- [x] 评测拆成「直接问法 / 改写问法」两条赛道，按场景卡门槛
+- [x] 开场白有 CLI（`scripts/openers.py`），不用再手翻 100 行 JSON
+- [x] 结果回写（`scripts/outcome.py`）：她说接没接住，检索慢慢偏向有效的卡
+- [x] 个人数据搬出仓库（`~/.crush-reply/`，可用 `CRUSH_HOME` 改）
+- [x] 今日情报对过库（`scripts/intel.py`），issue 按周合并
+- [x] CI 三平台矩阵（Linux 3.9/3.12、Windows 3.12）+ 单元测试
 - [ ] 繁简双语数据（`data/scenes-zh-Hant/`）
 - [ ] 表情包本地目录约定 + 一个 `stickers.py` 扫描器
 - [ ] grep baseline 对照，证明检索不是自说自话
 - [ ] MCP server 形态，挂到任意客户端
 - [ ] 从真实聊天记录导出的 `voices/` 半自动生成（只在本地跑，不上传）
+- [ ] 微信只读接入：把「她发来的那句」自动填进检索（只读剪贴板或手动粘贴，不做代发）
 
 ## English
 
-crush-reply is an open Chinese-language Agent Skill for people who freeze up when texting someone they like. Instead of a phrasebook, it ships 500 structured "situation cards" (context, intent, moves, taboos, follow-up), 107 multi-turn threads that cover the second and third reply where most advice stops, and 100 conversation openers grouped by anchor type. When nothing in the library fits, it turns your sentence into search phrases, reads public discussions for the *structure* only, and says plainly that the case is not in the library. A `voices/` profile stores how you actually text — sentence length, punctuation, whether you split one thought into two messages — and every reply is rewritten in that style. Retrieval is a dependency-free BM25 over Chinese character bigrams with a scene prior and a 40-case eval set that gates CI. It refuses manipulation tactics, and the refusal is enforced by lint, not just by a README. A scheduled GitHub Action opens an issue every morning with that day's search phrases, so the library keeps growing without anyone remembering to feed it. MIT licensed, and every data point is one JSON object per line, so contributing is a one-line PR.
+crush-reply is an open Chinese-language Agent Skill for people who freeze up when texting someone they like. Instead of a phrasebook, it ships 500 structured "situation cards" (context, intent, moves, taboos, follow-up), 107 multi-turn threads that cover the second and third reply where most advice stops, and 100 conversation openers grouped by anchor type. When nothing in the library fits, it turns your sentence into search phrases, reads public discussions for the *structure* only, and says plainly that the case is not in the library. A `voices/` profile stores how you actually text — sentence length, punctuation, whether you split one thought into two messages — and every reply is rewritten in that style. Retrieval is a dependency-free BM25 over Chinese character unigrams, bigrams and full runs, with a scene prior; 130 eval cases across ten scenes, in two tracks (literal and paraphrased), gate CI per scene. Personal data (profiles, voice samples, outcomes) lives outside the repo in `~/.crush-reply/`. It refuses manipulation tactics, and the refusal is enforced by lint, not just by a README. A scheduled GitHub Action posts a weekly issue with a daily comment that pairs each search phrase against the cards already in the library, so the library keeps growing without anyone remembering to feed it. MIT licensed, and every data point is one JSON object per line, so contributing is a one-line PR.
 
 ## License
 

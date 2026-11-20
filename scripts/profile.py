@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """对方画像：读、写、校验。
 
+数据放在 ~/.crush-reply/profiles/（可用 CRUSH_HOME 改），不放在技能包里，
+这样升级、重装、git clean 都不会把你的数据一起删掉。老版本放在仓库里的
+profiles/ 会在第一次运行时自动复制过去。
+
 用法:
     python scripts/profile.py new 小鹿      # 按模板建一份
     python scripts/profile.py show 小鹿     # 打印成一段，直接贴给模型
     python scripts/profile.py check         # 校验全部画像
     python scripts/profile.py list
 
-画像存在 profiles/<代号>.md，一行一个 `字段: 值`。
-不写不知道的字段，宁可空着，也不要猜。
+画像一行一个 `字段: 值`。不写不知道的字段，宁可空着，也不要猜。
 """
 from __future__ import annotations
 
@@ -18,10 +21,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PROFILE_DIR = ROOT / "profiles"
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import paths
 
 FIELDS = [
     ("代号", True, "你怎么称呼她/他，不要写真名"),
+    ("对方性别", False, "女 / 男，决定回复里的人称，不知道就按女写"),
     ("关系阶段", True, "初识 / 聊得来 / 暧昧 / 已在恋爱"),
     ("认识多久", False, "比如 三周、半年"),
     ("MBTI", False, "知道就写，不知道空着"),
@@ -36,6 +42,7 @@ FIELDS = [
 
 REQUIRED = [name for name, req, _ in FIELDS if req]
 STAGES = {"初识", "聊得来", "暧昧", "已在恋爱"}
+GENDERS = {"女", "男"}
 
 LINE_RE = re.compile(r"^\s*([^:：]{1,10})[:：]\s*(.*)$")
 
@@ -71,6 +78,7 @@ def template(alias: str) -> str:
     lines += [
         "",
         "<!-- 每个字段填什么：",
+        "  对方性别  女 / 男，只影响回复里的人称，不影响别的判断",
         "  关系阶段  初识 / 聊得来 / 暧昧 / 已在恋爱，只能填这四个",
         "  作息      几点睡、几点在线、哪几天忙",
         "  饮食      不吃什么、爱吃什么、忌口，生理期那段最用得上",
@@ -84,19 +92,20 @@ def template(alias: str) -> str:
 
 
 def cmd_new(alias: str) -> None:
-    PROFILE_DIR.mkdir(parents=True, exist_ok=True)
-    path = PROFILE_DIR / f"{alias}.md"
+    folder = paths.profiles_dir()
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{alias}.md"
     if path.exists():
         sys.exit(f"{path.name} 已经存在，换一个代号，或者直接编辑它")
     path.write_text(template(alias), encoding="utf-8", newline="\n")
-    print(f"已建好: {path.relative_to(ROOT)}")
+    print(f"已建好: {path}")
     print(f"填完跑 `python scripts/profile.py show {alias}` 看看读出来对不对")
 
 
 def cmd_show(alias: str) -> None:
-    path = PROFILE_DIR / f"{alias}.md"
+    path = paths.profiles_dir() / f"{alias}.md"
     if not path.exists():
-        sys.exit(f"没有 profiles/{alias}.md，先 `python scripts/profile.py new {alias}`")
+        sys.exit(f"没有 {alias}.md，先 `python scripts/profile.py new {alias}`")
     data = parse(path)
     print(f"【{data.get('代号', alias)}】")
     for name, req, _ in FIELDS:
@@ -111,31 +120,40 @@ def cmd_show(alias: str) -> None:
 
 
 def cmd_check() -> None:
-    if not PROFILE_DIR.is_dir():
-        sys.exit("profiles/ 目录不存在")
-    paths = sorted(p for p in PROFILE_DIR.glob("*.md") if not p.name.startswith("_"))
-    if not paths:
+    folder = paths.profiles_dir()
+    if not folder.is_dir():
+        print(f"还没有画像目录（{folder}），用到时会自动建。")
+        return
+    file_list = sorted(p for p in folder.glob("*.md") if not p.name.startswith("_"))
+    if not file_list:
         print("没有画像文件")
         return
     bad = 0
-    for path in paths:
+    for path in file_list:
         data = parse(path)
         problems = [f"缺 {name}" for name in REQUIRED if not data.get(name, "").strip()]
         stage = data.get("关系阶段", "").strip()
         if stage and stage not in STAGES:
             problems.append(f"关系阶段 {stage!r} 不在 {sorted(STAGES)} 里")
+        gender = data.get("对方性别", "").strip()
+        if gender and gender not in GENDERS:
+            problems.append(f"对方性别 {gender!r} 只能是 女 或 男")
         if problems:
             bad += 1
             print(f"x {path.name}: {'；'.join(problems)}")
         else:
             print(f"v {path.name}")
-    print(f"\n{len(paths) - bad}/{len(paths)} 通过")
+    print(f"\n{len(file_list) - bad}/{len(file_list)} 通过")
     if bad:
         sys.exit(1)
 
 
 def cmd_list() -> None:
-    for path in sorted(PROFILE_DIR.glob("*.md")):
+    folder = paths.profiles_dir()
+    if not folder.is_dir():
+        print(f"还没有画像（{folder}）")
+        return
+    for path in sorted(folder.glob("*.md")):
         if path.name.startswith("_"):
             continue
         data = parse(path)
@@ -149,6 +167,8 @@ def main() -> None:
     parser.add_argument("action", choices=["new", "show", "check", "list"])
     parser.add_argument("alias", nargs="?", help="代号，new 和 show 需要")
     args = parser.parse_args()
+
+    paths.ensure()
 
     if args.action == "new":
         if not args.alias:

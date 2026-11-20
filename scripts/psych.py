@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PSYCH_FILE = ROOT / "data" / "psych.jsonl"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from query import tokenize  # noqa: E402
+from index import token_weight, tokenize  # noqa: E402
 
 
 def load() -> list[dict]:
@@ -49,8 +49,9 @@ def score(query_tokens: list[str], item: dict) -> float:
         item.get("do", ""),
     ])
     hay_tokens = set(tokenize(hay))
-    hits = [t for t in set(query_tokens) if t in hay_tokens and len(t) >= 2]
-    return float(len(hits))
+    # 单字也放进来（以前会把长度 1 的词全丢掉，「她说疼」这类的概念就一条都搜不到），
+    # 但按 index 里的单字权重打折。
+    return sum(token_weight(t) for t in set(query_tokens) if t in hay_tokens)
 
 
 def render(item: dict) -> str:
@@ -113,6 +114,7 @@ def main() -> None:
         print(render(item))
         print()
     print("提醒: 概念是用来解释判断的，不要说成「你就是回避型」。人不是标签，贴上去她只会关门。")
+    print("出处都是公开出版物，没有逐条附链接；真要引用前按书名核对一遍，别把概念名说给对方听。")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,3 @@
+{"query": "她提之前说过的事，我完全没印象，她就不说话了", "scene": "conflict", "expect": ["conflict-001"]}
+{"query": "我迟到一个钟头，她说她一直在替我打圆场", "scene": "conflict", "expect": ["conflict-021"]}
+{"query": "吵完架她私聊不回我，群里倒是有说有笑", "scene": "conflict", "expect": ["conflict-024"]}

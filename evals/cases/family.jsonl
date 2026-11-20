@@ -1,0 +1,10 @@
+{"query": "她姑当着一桌人问她一个月挣多少", "scene": "family", "expect": ["family-009"]}
+{"query": "她想给妈买按摩椅，又怕被说乱花钱", "scene": "family", "expect": ["family-048"]}
+{"query": "她姑在群里艾特她，问什么时候带人回来", "scene": "family", "expect": ["family-050"]}
+{"query": "她妈给她转了张照片，让她周末去见一面", "scene": "family", "expect": ["family-001"]}
+{"query": "她说搬家没让我妈来，一个人搬到半夜", "scene": "family", "expect": ["family-015"]}
+{"query": "她相亲坐在对面，一直被问工资和房子", "scene": "family", "expect": ["family-023"]}
+{"query": "她舅让她去厂里做财务，她妈已经在电话里答应了", "scene": "family", "expect": ["family-034"]}
+{"query": "她爸说再在外面漂着就别回来了，让她年底辞职", "scene": "family", "expect": ["family-004"]}
+{"query": "她妈哭着说她爸这个月一分钱没往家拿", "scene": "family", "expect": ["family-012"]}
+{"query": "她妈说打算把手续办了，让她别有负担", "scene": "family", "expect": ["family-025"]}

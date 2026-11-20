@@ -1,0 +1,3 @@
+{"query": "凌晨她问我还醒着吗，说睡不着", "scene": "latenight", "expect": ["latenight-001"]}
+{"query": "她说这周三个 ddl，脑子转不动了", "scene": "latenight", "expect": ["latenight-028"]}
+{"query": "她说别人都过得挺好，就她一团糟", "scene": "latenight", "expect": ["latenight-013"]}

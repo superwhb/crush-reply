@@ -1,4 +1,4 @@
-name: lint
+name: ci
 
 on:
   push:
@@ -6,73 +6,90 @@ on:
   pull_request:
 
 jobs:
-  data:
-    runs-on: ubuntu-latest
+  test:
+    name: py${{ matrix.python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.9"
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: windows-latest
+            python: "3.12"
+    defaults:
+      run:
+        shell: bash
+    env:
+      CRUSH_HOME: ${{ runner.temp }}/crush-home
+      PYTHONIOENCODING: utf-8
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python }}
 
-      - name: 校验情境卡
-        run: python scripts/lint_data.py
+      - name: 单元测试
+        run: python -m unittest discover -s tests -v
 
-      - name: 校验多轮链与开场白
-        run: python scripts/lint_extra.py
-
-      - name: 校验心理学概念
-        run: python scripts/lint_psych.py
-
-      - name: 校验 SKILL.md
-        run: python scripts/lint_skill.py
-
-      - name: 检索冒烟测试
+      - name: 数据与文档 lint
         run: |
-          python scripts/query.py "她说明天来例假，肚子疼得起不来" --top 3
-          python scripts/query.py --scene conflict --top 2 "她生我气了不理我"
-          python scripts/query.py --list > /dev/null
-          python scripts/query.py --explain --scene period --top 1 "疼得厉害了，坐着都难受"
-          python scripts/thread.py "她说想辞职，说完就不说话了" --top 2
-          python scripts/thread.py --list > /dev/null
+          python scripts/lint_data.py
+          python scripts/lint_extra.py
+          python scripts/lint_psych.py
+          python scripts/lint_skill.py
 
-      - name: 概念层冒烟测试
-        run: |
-          python scripts/psych.py --list
-          python scripts/psych.py --scene conflict --top 2
-          python scripts/psych.py "她一直不回我，我就很想再发一条"
-          python scripts/psych.py --json > /dev/null
-
-      - name: 检索回归（hit@3 低于 90% 就失败）
+      - name: 检索回归（按场景卡门槛，不再用整体 90%）
         run: python scripts/eval.py
 
-      - name: 校验每日情报的候选与来源
+      - name: 命令行冒烟
         run: |
+          set -euo pipefail
+          python scripts/query.py "她说明天来例假，肚子疼得起不来" --top 3
+          python scripts/query.py --list > /dev/null
+          python scripts/query.py --stats > /dev/null
+          python scripts/query.py --explain --scene period --top 1 "疼得厉害了" > /dev/null
+          # 单字查询：以前「疼」是 0 命中
+          python scripts/query.py --scene period --top 1 "疼" | grep -q "period-"
+
+          python scripts/thread.py --list > /dev/null
+          python scripts/thread.py "她说想辞职，说完就不说话了" --top 1 > /dev/null
+
+          python scripts/psych.py --list > /dev/null
+          python scripts/psych.py --scene conflict --top 1 > /dev/null
+          python scripts/psych.py "她一直不回我，我就很想再发一条" > /dev/null
+
+          python scripts/openers.py --anchor 她提过的事 -n 2 > /dev/null
+          python scripts/openers.py --list > /dev/null
+
+          python scripts/intel.py -n 1 > /dev/null
           python scripts/harvest.py check
           python scripts/harvest.py plan -n 1 > /dev/null
-          python scripts/harvest.py stats
+          python scripts/harvest.py stats > /dev/null
+          python scripts/find.py "她说她最近有点累，但又不说怎么了" > /dev/null
 
-      - name: 库外兜底与语气档案冒烟测试
+      - name: 个人数据的读写（写到临时目录，不碰仓库）
         run: |
-          python scripts/find.py "她说她最近有点累，但又不说怎么了"
-          python scripts/find.py "前任突然来点赞" --json > /dev/null
-          python scripts/voice.py list
+          set -euo pipefail
+          python scripts/profile.py new 测试人
+          python scripts/profile.py show 测试人 > /dev/null
+          python scripts/profile.py check
           python scripts/voice.py new 测试语气
           python scripts/voice.py show 测试语气 > /dev/null
-          rm -f "voices/测试语气.md"
+          python scripts/outcome.py log period-004 --reaction 回了
+          python scripts/outcome.py stats > /dev/null
+          python scripts/outcome.py list > /dev/null
 
-      - name: 画像与提示包冒烟测试
+      - name: 提示包与新卡工具
         run: |
-          python scripts/profile.py new 测试人
-          python scripts/profile.py show 测试人
-          python demo.py "她今天说想辞职" --scene daily > /dev/null
-          python demo.py "她一直不回我" --scene daily > /dev/null
-          python demo.py --openers > /dev/null
-          rm -f "profiles/测试人.md"
-          python scripts/query.py --stats
-
-      - name: 自检与加卡工具
-        run: |
-          python scripts/doctor.py --quiet
+          set -euo pipefail
+          python demo.py "她今天说想辞职" --profile 测试人 > /dev/null
+          python demo.py --openers --profile 测试人 > /dev/null
+          python demo.py "她今天说想辞职" --json > /dev/null
           python scripts/new_card.py --scene period --title "CI 冒烟卡" \
             --signal "晚上九点她说今天又疼得厉害了" --goal "接住疼，落到一个动作" \
             --stage 暧昧 --moves 共情,认真回应 \
@@ -81,3 +98,6 @@ jobs:
             --taboo "多喝热水" --taboo "忍一忍就过去了" \
             --followup "她没回就一小时后问一句好点没" \
             --tags 冒烟,测试 --difficulty 1 --dry-run
+
+      - name: 自检
+        run: python scripts/doctor.py --quiet

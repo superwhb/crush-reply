@@ -1,0 +1,3 @@
+{"query": "她在群里被起哄，截图给我说烦死了", "scene": "friends", "expect": ["friends-011"]}
+{"query": "她闺蜜说我上次吃饭太闷", "scene": "friends", "expect": ["friends-001"]}
+{"query": "她说要陪失恋的朋友一周，我们约好的事得推", "scene": "friends", "expect": ["friends-039"]}

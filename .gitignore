@@ -1,20 +1,25 @@
-# 本地画像和说话风格不进仓库
+# 个人数据默认在 ~/.crush-reply/，不在仓库里。
+# 下面几条是留给旧版目录的：升级时 paths.ensure() 会把它们搬走，但仓库里
+# 还留着 _template.md 作示例，升级前的手写档案也先挡住，别误提交。
 profiles/*.md
 !profiles/_template.md
 voices/*.md
 !voices/_template.md
 
-# 缺口流水帐只留说明文件
+# 缺口流水帐同理，新的记在 ~/.crush-reply/gaps/
 research/gaps/*.md
 !research/gaps/README.md
 
 # 表情包目录（体积大、版权复杂，只留索引）
 stickers/
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.webp
+
+# 根目录随手存的截图别进仓库。assets/ 下的预览图和 gif 是 README 用的，
+# 要提交就明确 add，别再用全局 *.png 把新截图一起挡掉。
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.webp
 
 __pycache__/
 *.pyc
