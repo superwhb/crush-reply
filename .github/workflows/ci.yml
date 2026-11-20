@@ -23,7 +23,8 @@ jobs:
       run:
         shell: bash
     env:
-      CRUSH_HOME: ${{ runner.temp }}/crush-home
+      # runner.* 在 job 级 env 里不可用，用 github.workspace 的上级目录
+      CRUSH_HOME: ${{ github.workspace }}/../crush-home
       PYTHONIOENCODING: utf-8
 
     steps:
