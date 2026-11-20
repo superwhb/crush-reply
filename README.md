@@ -155,6 +155,18 @@ python scripts/openers.py --anchor 她提过的事 --stage 暧昧 -n 3
 
 `demo.py` 是懒人版：一条命令把画像、三张卡、两条多轮链、三条开场白拼成一段材料，末尾附固定输出格式。它**不调用任何模型**，产出可以整段贴给 ChatGPT / Claude / DeepSeek 用。
 
+### 在微信里用
+
+复制她那句话，然后：
+
+```bash
+python scripts/clip.py            # 读一次剪贴板
+python scripts/clip.py --watch    # 挂着，复制一句出一次
+python scripts/clip.py --copy     # 顺便把最相关那张卡的示例放回剪贴板
+```
+
+它只读剪贴板，不登录、不读聊天记录、不替你发消息。回复还是你自己按画像改完、自己点发送。这样既不用碰微信的协议，也不会因为第三方工具被限制。
+
 三个完整走流程的样例（输入、检索、输出、以及为什么那么改）：
 
 - [她在吐槽食堂](examples/01-share-daily.md)
@@ -201,7 +213,7 @@ git clone https://github.com/superwhb/crush-reply.git ~/.dsh/skills/crush-reply
 python scripts/doctor.py
 ```
 
-它会查五类事：frontmatter 的 `name` 和目录名是否一致、必需文件是否齐全（17 个）、数据文件是不是 UTF-8 无 BOM、三个 lint 加单字检索加回归测试能不能过、画像和说话风格存到了哪里。全过就十一行 `ok`；有问题会直接告诉你是哪一条、怎么改。
+它会查五类事：frontmatter 的 `name` 和目录名是否一致、必需文件是否齐全（18 个）、数据文件是不是 UTF-8 无 BOM、三个 lint 加单字检索加回归测试能不能过、画像和说话风格存到了哪里。全过就十一行 `ok`；有问题会直接告诉你是哪一条、怎么改。
 
 ```text
 crush-reply doctor · /Users/you/.claude/skills/crush-reply
@@ -211,7 +223,7 @@ python 3.12.1
   ok  frontmatter name = crush-reply
   ok  装在 Claude Code 的 skills 目录下
 二、数据文件
-  ok  17 个必需文件都在
+  ok  18 个必需文件都在
 三、编码
   ok  数据文件都是 UTF-8 无 BOM
 四、校验与检索
@@ -311,7 +323,8 @@ ps-005  依恋焦虑   [Hazan & Shaver 1987 成人依恋研究]
    │
    ├─ 1. 读画像      ~/.crush-reply/profiles/  关系阶段、MBTI、雷区、近期事件
    ├─ 2. 定场景      daily / period / …    十个场景，选一个或两个
-   ├─ 3. 检索        scripts/query.py      命中 3 张情境卡
+   ├─ 3. 检索        scripts/clip.py       微信里复制她那句话，直接读剪贴板
+   │                 scripts/query.py      命中 3 张情境卡
    │                 scripts/thread.py     命中 2 条多轮链
    │                 data/openers.jsonl    没有由头时找 3 条开场
    │                 scripts/psych.py      2 条概念，说明为什么这么回有用
@@ -522,12 +535,12 @@ CI 会跑 `lint_data.py`、`lint_extra.py`、`lint_psych.py`、`lint_skill.py`�
 - [x] 个人数据搬出仓库（`~/.crush-reply/`，可用 `CRUSH_HOME` 改）
 - [x] 今日情报对过库（`scripts/intel.py`），issue 按周合并
 - [x] CI 三平台矩阵（Linux 3.9/3.12、Windows 3.12）+ 单元测试
+- [x] 微信只读接入（`scripts/clip.py`）：复制她的话就出卡，不登录、不代发
 - [ ] 繁简双语数据（`data/scenes-zh-Hant/`）
 - [ ] 表情包本地目录约定 + 一个 `stickers.py` 扫描器
 - [ ] grep baseline 对照，证明检索不是自说自话
 - [ ] MCP server 形态，挂到任意客户端
 - [ ] 从真实聊天记录导出的 `voices/` 半自动生成（只在本地跑，不上传）
-- [ ] 微信只读接入：把「她发来的那句」自动填进检索（只读剪贴板或手动粘贴，不做代发）
 
 ## English
 

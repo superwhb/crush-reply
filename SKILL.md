@@ -17,6 +17,7 @@ description: 帮忙回暧昧对象或恋爱初期对方的消息。当用户不�
 - 对方情绪不对（生气、委屈、深夜低落），怕说错话
 - 生理期、吃醋、吵架后修复、家人与异地这类高难度场合
 - 从线上聊到线下，要约但不知道怎么开口
+- 对方刚在微信发来一句，用户复制了过来（让他跑 `python scripts/clip.py`，或者直接把原话贴进对话）
 
 ## 工作流
 
@@ -213,6 +214,7 @@ scripts/find.py          库里没有时，算出该去搜什么、怎么提炼
 scripts/voice.py         说话风格档案的建、读、校验
 scripts/profile.py       画像读写
 scripts/outcome.py       结果回写：她接没接住
+scripts/clip.py          微信那边复制一句，直接读剪贴板出卡（只读，不代发）
 scripts/intel.py         今日情报：检索词和库里现有的卡对照
 scripts/doctor.py        装完自检：目录、文件、编码、lint、检索、回归
 scripts/new_card.py      加卡向导：字段与枚举当场验，失败自动回滚

@@ -43,6 +43,7 @@ REQUIRED = [
     "scripts/psych.py",
     "scripts/openers.py",
     "scripts/outcome.py",
+    "scripts/clip.py",
     "evals/gate.json",
 ]
 SCENE_FILES = ["daily", "period", "conflict", "jealousy", "latenight",

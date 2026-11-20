@@ -135,5 +135,28 @@ class OpenersTest(unittest.TestCase):
         self.assertEqual(rows[0]["anchor"], "她提过的事")
 
 
+class ClipTest(unittest.TestCase):
+    def test_short_message_is_accepted(self):
+        import clip
+
+        self.assertTrue(clip.looks_like_her("她说今天不想上班了"))
+
+    def test_long_text_is_skipped(self):
+        """剪贴板里复制了一整篇文章时，不该拿它去检索。"""
+        import clip
+
+        self.assertFalse(clip.looks_like_her("她" * 400))
+        self.assertFalse(clip.looks_like_her("   "))
+
+    def test_copy_roundtrip_or_clean_failure(self):
+        """有剪贴板就读回来比对，没有（比如 CI 上）就只要求不抛异常。"""
+        import clip
+
+        text = "crush-reply clipboard probe"
+        if not clip.copy_to_clipboard(text):
+            return
+        self.assertEqual(clip.read_clipboard().strip(), text)
+
+
 if __name__ == "__main__":
     unittest.main()

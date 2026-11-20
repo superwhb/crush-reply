@@ -73,6 +73,9 @@ jobs:
           python scripts/harvest.py stats > /dev/null
           python scripts/find.py "她说她最近有点累，但又不说怎么了" > /dev/null
 
+          # 剪贴板桥：CI 上没有剪贴板，用 --stdin 测同一套检索
+          printf '她说来例假了肚子疼得厉害\n' | python scripts/clip.py --stdin --top 1 > /dev/null
+
       - name: 个人数据的读写（写到临时目录，不碰仓库）
         run: |
           set -euo pipefail
