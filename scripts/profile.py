@@ -129,23 +129,32 @@ def cmd_check() -> None:
         print("没有画像文件")
         return
     bad = 0
+    empty = 0
     for path in file_list:
         data = parse(path)
-        problems = [f"缺 {name}" for name in REQUIRED if not data.get(name, "").strip()]
+        # 分两种：值填错了算问题；字段还空着只算没填完，不算错误。
+        problems = []
         stage = data.get("关系阶段", "").strip()
         if stage and stage not in STAGES:
             problems.append(f"关系阶段 {stage!r} 不在 {sorted(STAGES)} 里")
         gender = data.get("对方性别", "").strip()
         if gender and gender not in GENDERS:
             problems.append(f"对方性别 {gender!r} 只能是 女 或 男")
+        missing = [name for name in REQUIRED if not data.get(name, "").strip()]
         if problems:
             bad += 1
             print(f"x {path.name}: {'；'.join(problems)}")
+        elif missing:
+            empty += 1
+            print(f"- {path.name}: 还没填完（缺 {'、'.join(missing)}）")
         else:
             print(f"v {path.name}")
-    print(f"\n{len(file_list) - bad}/{len(file_list)} 通过")
+    done = len(file_list) - bad - empty
+    print(f"\n{done}/{len(file_list)} 填完")
     if bad:
         sys.exit(1)
+    if empty:
+        print("还在模板状态的那份，填完再跑一次 check 就好。")
 
 
 def cmd_list() -> None:

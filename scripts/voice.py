@@ -74,6 +74,13 @@ def cmd_show(alias: str) -> None:
     text = path.read_text(encoding="utf-8")
     body = [ln for ln in text.splitlines() if ln.strip() and not ln.startswith("<!--")]
     print("\n".join(body))
+    got = samples(text)
+    if len(got) < MIN_SAMPLES:
+        print(
+            f"\n（这份档案现在只有 {len(got)} 条真消息，至少要 {MIN_SAMPLES} 条才学得像。"
+            "把你自己发过的短消息贴进代码块，一行一条。）",
+            file=sys.stderr,
+        )
 
 
 def cmd_check() -> None:

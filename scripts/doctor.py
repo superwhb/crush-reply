@@ -78,6 +78,12 @@ def bad(msg: str, fix: str, quiet: bool) -> None:
         print(f"      {fix}")
 
 
+def note(msg: str, quiet: bool) -> None:
+    """只是报个信息，不计入通过项，否则通过数会随你建了几份画像上下跳。"""
+    if not quiet:
+        print(f"  --  {msg}")
+
+
 def head(title: str, quiet: bool, lead: bool = False) -> None:
     """--quiet 时不打小节标题，只留结论和问题。"""
     if not quiet:
@@ -228,10 +234,9 @@ def main() -> None:
     for label, folder in (("画像", paths.profiles_dir()), ("说话风格", paths.voices_dir())):
         if folder.is_dir():
             files = [p for p in folder.glob("*.md") if not p.name.startswith("_")]
-            ok(f"{label} {len(files)} 份", quiet)
+            note(f"{label} {len(files)} 份", quiet)
         else:
-            if not quiet:
-                print(f"  --  {label}还没建（用到时会自动建）")
+            note(f"{label}还没建（用到时会自动建）", quiet)
 
     # 6. 结论
     print("\n" + "-" * 46)
